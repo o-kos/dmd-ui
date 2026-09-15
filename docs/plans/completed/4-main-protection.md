@@ -50,21 +50,26 @@ protection, so an administrator can still push to or merge into `main` directly.
       the administrator exception in `CONTRIBUTING.md`, and describe the hook as the
       local copy of the gate.
 - [x] State in `AGENTS.md` that a merge waits for the required `ci/full` check.
-- [ ] Complete validation.
-- [ ] Move this plan to `docs/plans/completed/` before final review.
+- [x] Complete validation.
+- [x] Move this plan to `docs/plans/completed/` before final review.
+
+## Review
+
+- [x] Record the completed gate and content policy validation in this plan.
+- [x] Remove the repeated administrator rationale from `CONTRIBUTING.md`.
 
 ## Validation
 
-- [ ] Verify each Issue acceptance criterion.
-- [ ] `cargo fmt --all -- --check`
-- [ ] `cargo clippy --all-targets --locked`
+- [x] Verify each Issue acceptance criterion.
+- [x] `cargo fmt --all -- --check`
+- [x] `cargo clippy --all-targets --locked`
       (warnings are denied in `[workspace.lints]`)
-- [ ] `cargo clippy -p dmd --features native --all-targets --locked` with an empty core
+- [x] `cargo clippy -p dmd --features native --all-targets --locked` with an empty core
       directory (see `CONTRIBUTING.md` for exact commands)
-- [ ] `cargo test --locked`
-- [ ] `cargo test -p dmd-native --locked`
-- [ ] The content policy accepts every outgoing commit
-- [ ] `cargo build --release --locked`, after the gate passes
+- [x] `cargo test --locked`
+- [x] `cargo test -p dmd-native --locked`
+- [x] The content policy accepts every outgoing commit
+- [x] `cargo build --release --locked`, after the gate passes
 
 ## Post-completion
 

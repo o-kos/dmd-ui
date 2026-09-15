@@ -85,9 +85,8 @@ count is required; stale approvals are dismissed when new commits arrive. The re
 `ci/full` check must come from GitHub Actions. History must be linear and all review
 conversations must be resolved. Force pushes to `main` and its deletion are forbidden.
 Administrators are not included in the protection, so an administrator can still push
-to or merge into `main` directly. The hook is an early, local copy of the gate that also
-refuses direct pushes to `main`; this refusal still matters because administrators are
-not included in the protection. Server-side merges do not execute it.
+to or merge into `main` directly. For that reason the hook, an early local copy of the
+gate, also refuses direct pushes to `main`. Server-side merges do not execute it.
 
 Draft Pull Requests run formatting, default and native lints, policy tests and
 core-independent native tests on Linux, producing `ci/quick`. Ready Pull Requests,
