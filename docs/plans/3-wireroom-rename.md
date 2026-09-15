@@ -53,7 +53,7 @@ as a URL on the W3C host.
 
 - [x] Allow the SVG namespace host and recognise markup closing tags in the content
       policy, with unit tests.
-- [ ] Add the colour and monochrome icon sources under `assets/icons/`.
+- [x] Add the colour and monochrome icon sources under `assets/icons/`.
 - [ ] Name the product Wireroom and record the `wr` and `dmd` binaries in `README.md`,
       `AGENTS.md` and `CONTRIBUTING.md`, and add an `Unreleased` entry to `CHANGELOG.md`.
 - [ ] Complete validation.
