@@ -116,6 +116,68 @@ fn policy_scripts_pass_their_tests() {
 }
 
 #[cfg(unix)]
+fn without_git_environment(mut command: Command) -> Command {
+    for (name, _) in std::env::vars_os() {
+        if name.as_encoded_bytes().starts_with(b"GIT_") {
+            command.env_remove(name);
+        }
+    }
+    command
+}
+
+#[cfg(unix)]
+#[test]
+fn push_hook_ignores_inherited_git_environment() {
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let other = std::env::temp_dir().join(format!(
+        "dmd-hook-other-repository-{}-{nonce}",
+        std::process::id()
+    ));
+    let init = without_git_environment(Command::new("git"))
+        .args(["init", "--bare"])
+        .arg(&other)
+        .output()
+        .unwrap();
+    assert!(
+        init.status.success(),
+        "{}",
+        String::from_utf8_lossy(&init.stderr)
+    );
+    for contaminated in [false, true] {
+        let mut test = without_git_environment(Command::new(std::env::current_exe().unwrap()));
+        test.args([
+            "--exact",
+            "push_hook_enforces_content_and_local_policy",
+            "--nocapture",
+        ]);
+        if contaminated {
+            test.env("GIT_DIR", &other);
+            for name in [
+                "GIT_WORK_TREE",
+                "GIT_INDEX_FILE",
+                "GIT_OBJECT_DIRECTORY",
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                "GIT_COMMON_DIR",
+                "GIT_PREFIX",
+            ] {
+                test.env(name, other.join("unused"));
+            }
+        }
+        let output = test.output().unwrap();
+        assert!(
+            output.status.success(),
+            "hook fixture failed (contaminated={contaminated}):\n{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed"));
+    }
+}
+
+#[cfg(unix)]
 #[test]
 fn push_hook_enforces_content_and_local_policy() {
     use std::os::unix::fs::PermissionsExt;
@@ -137,7 +199,7 @@ fn push_hook_enforces_content_and_local_policy() {
     std::fs::write(&cargo, "exit 0\n").unwrap();
     std::fs::set_permissions(&cargo, std::fs::Permissions::from_mode(0o755)).unwrap();
     let git = |args: &[&str]| {
-        let output = Command::new("git")
+        let output = without_git_environment(Command::new("git"))
             .current_dir(&fixture)
             .args(args)
             .output()
@@ -200,7 +262,7 @@ fn invoke_hook(fixture: &Path, base: &str, head: &str, destination: &str) -> std
         format!("refs/heads/topic {head} refs/heads/{destination} {base}\n"),
     )
     .unwrap();
-    Command::new("git")
+    without_git_environment(Command::new("git"))
         .current_dir(fixture)
         .args([
             "-c",
