@@ -93,6 +93,29 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] Shorten crate directory names while preserving package and binary names.
 - [x] Run the requested validation, including tests with inherited `GIT_DIR`.
 
+## Code quality policy
+
+The owner asked for an explicit Rust maintainability policy on top of Clippy's
+defaults before this change lands.
+
+- Add `excessive_nesting`, `fn_params_excessive_bools`, `manual_let_else`,
+  `redundant_else` and `branches_sharing_code` to the existing individually selected
+  lints. The `pedantic`, `nursery` and `restriction` groups stay disabled: they contain
+  lints that contradict each other and grow silently on a toolchain bump.
+- Lint levels become `warn` under `warnings = "deny"`, so the gate is equally strict
+  while `-W warnings` can still survey every finding across crates that fail to build.
+- Existing thresholds stay as strict as they are; relaxing any of them needs the same
+  owner agreement as a suppression. New thresholds: nesting depth 5, because depth 4
+  fires on idiomatic `if`/`else` expressions inside loops, and at most 3 boolean
+  parameters. Every threshold carries a comment naming what it protects against.
+- Opaque nested `if` chains are a review obligation that no lint enforces.
+
+- [ ] Add the lints, move their levels under `warnings = "deny"`, and document each
+      threshold in `clippy.toml`; refactor any code the new lints flag.
+- [ ] Document the lint policy, the suppression rule and the `if`-chain review
+      obligation in `CONTRIBUTING.md` and `AGENTS.md`, and state that CI never restates
+      lint configuration with different flags.
+
 ## Validation
 
 - [x] `cargo fmt --all -- --check`
