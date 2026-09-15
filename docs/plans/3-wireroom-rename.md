@@ -37,7 +37,8 @@ as a URL on the W3C host.
   crate exists and takes ownership of them.
 - The host of the SVG namespace joins the content policy's host allowlist. It belongs
   to a published standard that the disclosure rule explicitly excludes, and a valid
-  standalone SVG cannot omit its namespace.
+  standalone SVG cannot omit its namespace. Markup closing tags are recognised as tags
+  rather than paths.
 
 ## Rejected alternatives
 
@@ -50,7 +51,8 @@ as a URL on the W3C host.
 
 ## Implementation steps
 
-- [ ] Allow the SVG namespace host in the content policy, with a unit test.
+- [x] Allow the SVG namespace host and recognise markup closing tags in the content
+      policy, with unit tests.
 - [ ] Add the colour and monochrome icon sources under `assets/icons/`.
 - [ ] Name the product Wireroom and record the `wr` and `dmd` binaries in `README.md`,
       `AGENTS.md` and `CONTRIBUTING.md`, and add an `Unreleased` entry to `CHANGELOG.md`.
