@@ -103,6 +103,11 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] Type-check and lint native code without a core in the hook and both CI jobs.
 - [x] Complete the full validation gate and leave the plan move pending.
 
+## Review round 2
+
+- [x] Normalize bare host candidates before policy comparisons and test uppercase hosts.
+- [ ] Run core-independent native diagnostic tests without the native feature in every gate.
+
 ## Code quality policy
 
 The owner asked for an explicit Rust maintainability policy on top of Clippy's

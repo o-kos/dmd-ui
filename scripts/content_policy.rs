@@ -98,13 +98,13 @@ fn token_violation(token: &str) -> Option<&'static str> {
     if escapes_tree(token) {
         return Some("path escapes the working tree");
     }
-    let host = token.split(['/', ':']).next().unwrap_or("");
-    if host_like(host)
+    let host = token.split(['/', ':']).next().unwrap_or("").to_ascii_lowercase();
+    if host_like(&host)
         && host
             .rsplit('.')
             .next()
             .is_some_and(|suffix| DNS_SUFFIXES.contains(&suffix))
-        && !HOSTS.contains(&host)
+        && !HOSTS.contains(&host.as_str())
         && !host
             .rsplit('.')
             .next()
@@ -281,6 +281,15 @@ mod tests {
             "https://github.com/actions/checkout",
         ] {
             assert_eq!(violation(value), None, "rejected {value}");
+        }
+    }
+
+    #[test]
+    fn checks_bare_hosts_case_insensitively() {
+        let host = ["SERVICE", "INVALID"].join(".");
+        assert_eq!(violation(&host), Some("unapproved host"));
+        for host in ["GitHub.com", "GITHUB.COM"] {
+            assert_eq!(violation(host), None, "rejected {host}");
         }
     }
 
