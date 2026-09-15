@@ -41,8 +41,9 @@ The CLI currently reports that each command is not implemented. Native builds re
 
 ## Architectural invariants
 
-- `native` is not a default feature. Optional dependencies ensure a disabled feature
-  runs no native build script; hiding calls behind `cfg` is insufficient.
+- `native` is not a default feature. Optional dependencies isolate default builds;
+  the core linking script is inert without its own `native` feature, even when selected
+  explicitly or through `--workspace`.
 - Replay-only builds and tests require no Python, CMake or C++ toolchain.
 - There is no silent fallback. A core that fails to load or a corrupt recording is an
   error, never a quiet switch to the other backend.

@@ -1,6 +1,10 @@
-use std::env;
+#[cfg(not(feature = "native"))]
+fn main() {}
 
+#[cfg(feature = "native")]
 fn main() {
+    use std::env;
+
     for name in [
         "DMD_CORE_LIB_DIR",
         "DMD_CORE_LIB_NAME",

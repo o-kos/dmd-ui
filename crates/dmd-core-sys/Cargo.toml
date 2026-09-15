@@ -6,5 +6,9 @@ rust-version.workspace = true
 license.workspace = true
 links = "dmd_core"
 
+[features]
+default = []
+native = []
+
 [lints]
 workspace = true

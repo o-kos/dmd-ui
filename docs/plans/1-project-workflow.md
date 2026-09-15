@@ -23,9 +23,9 @@ more expensive than starting with it:
 - A replay-only build must need no C++ toolchain and no signal core. This is what lets
   the interface be developed and tested on its own, and it is the one invariant that CI
   can prove on every push.
-- A disabled `native` feature must run no build script, not merely hide calls behind
-  `cfg`. An optional dependency introduced with `dep:` is not built at all when its
-  feature is off, which gives this property structurally rather than by discipline.
+- A disabled `native` feature must perform no native probing or linking. Optional
+  dependencies isolate default builds, and a default-off feature makes the core build
+  script inert even when explicitly selected or included through `--workspace`.
 
 ## Decisions
 
@@ -33,8 +33,9 @@ more expensive than starting with it:
   so the two can never disagree.
 - Clippy strictness lives in `[workspace.lints]`, not on the command line, so a plain
   `cargo clippy` is as strict locally as in CI.
-- The workspace declares `default-members` without the native crates, so a bare
-  `cargo build` or `cargo test` cannot reach them.
+- The workspace declares `default-members` without the native crates to keep default
+  builds small. Isolation also holds for workspace-wide selection because the core
+  linking script requires its own default-off feature.
 - The native build links a prebuilt static library located through environment
   variables. The repository owns the C ABI contract; it does not build, vendor or
   describe whatever implements it.
@@ -84,7 +85,7 @@ more expensive than starting with it:
 
 Keep this plan in place and stop after local commits; do not push.
 
-- [ ] Gate the core linking script behind a default-off feature, propagate native
+- [x] Gate the core linking script behind a default-off feature, propagate native
       activation, and test workspace-wide and explicit crate selection without a core.
 - [ ] Reject empty and invalid local policy settings and cover them in hook tests.
 - [ ] Clarify the disclosure boundary in the contributor and agent instructions.
@@ -101,7 +102,7 @@ Keep this plan in place and stop after local commits; do not push.
 - [ ] `cargo build -p dmd --no-default-features` with no C++ toolchain present
 - [ ] `cargo build -p dmd --features native` without the core variables fails naming
       only those variables
-- [ ] No build script runs while `native` is disabled
+- [ ] No native probing or linking occurs while `native` is disabled
 - [ ] The dependency-source policy test rejects a path or git source outside the
       workspace
 - [ ] The hook refuses a direct push to `main` and fails on a planted generic violation

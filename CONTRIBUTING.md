@@ -65,8 +65,10 @@ not count as successes. Configure the required full check once the workflow exis
 ## Native builds
 
 The default build and tests require only Rust and the platform's ordinary Rust linker,
-with no Python, CMake, C++ compiler or signal core. Both native crates are excluded from
-`default-members` and connected only by optional dependencies and explicit features.
+with no Python, CMake, C++ compiler or signal core. Optional dependencies keep native
+crates out of default builds. Even explicit crate or workspace-wide selection requires
+no core: the core linking script is inert unless its default-off `native` feature is
+enabled transitively by the CLI native feature.
 
 For a native build, set `DMD_CORE_LIB_DIR` to the directory containing the prebuilt
 static library. `DMD_CORE_LIB_NAME` defaults to `dmd_core` (without a filename prefix or
@@ -78,8 +80,8 @@ cargo build -p dmd --features native
 ```
 
 The ABI contract is `crates/dmd-core-sys/include/dmd_core.h`. Its implementation is not
-part of this repository. Dependency build scripts may run in a default build; native
-crate compilation and the native linking script must not.
+part of this repository. With `native` disabled, the core linking script performs no
+environment reads, probing or linking.
 
 ## 4. External review
 
