@@ -62,11 +62,11 @@ more expensive than starting with it:
 
 ## Implementation steps
 
-- [ ] Add `AGENTS.md` with the invariants and conventions, and `CLAUDE.md` as a symlink.
-- [ ] Add `CONTRIBUTING.md` with the full lifecycle, the validation gate, the external
+- [x] Add `AGENTS.md` with the invariants and conventions, and `CLAUDE.md` as a symlink.
+- [x] Add `CONTRIBUTING.md` with the full lifecycle, the validation gate, the external
       review procedure and the plan rules.
-- [ ] Add `docs/plans/README.md`, `docs/plans/TEMPLATE.md` and `docs/plans/completed/`.
-- [ ] Add the Issue and Pull Request templates.
+- [x] Add `docs/plans/README.md`, `docs/plans/TEMPLATE.md` and `docs/plans/completed/`.
+- [x] Add the Issue and Pull Request templates.
 - [ ] Add `.githooks/pre-push` with the local gate, the `main` refusal, the generic
       content checks and the optional local policy hook.
 - [ ] Add the Cargo workspace: `rust-toolchain.toml`, `clippy.toml`, workspace lints and
@@ -76,7 +76,7 @@ more expensive than starting with it:
       ABI header, the linking build script and its diagnostic for missing variables.
 - [ ] Add the CI workflow publishing `ci/quick` on Draft and `ci/full` otherwise, plus
       the dependency-source policy test.
-- [ ] Add `CHANGELOG.md`.
+- [x] Add `CHANGELOG.md`.
 - [ ] Complete validation.
 - [ ] Move this plan to `docs/plans/completed/` before final review.
 
