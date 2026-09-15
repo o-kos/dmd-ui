@@ -1,0 +1,53 @@
+# Git executes this portable shell hook through its shell fallback.
+set -eu
+
+fail() {
+    echo "pre-push: $1" >&2
+    exit 1
+}
+
+root=$(git rev-parse --show-toplevel) || fail "cannot locate the working tree"
+cd "$root"
+updates=$(mktemp) || fail "cannot save ref updates"
+trap 'rm -f "$updates"' EXIT HUP INT TERM
+cat > "$updates"
+
+policy_configured=false
+if policy=$(git config --get dmd.localPolicy); then
+    policy_configured=true
+    echo "pre-push: local policy hook configured"
+    case "$policy" in
+        "") fail "dmd.localPolicy must name an executable file" ;;
+        /*) ;;
+        *) policy="$root/$policy" ;;
+    esac
+    test -f "$policy" && test -x "$policy" || fail "dmd.localPolicy must name an executable file"
+else
+    status=$?
+    test "$status" -eq 1 || fail "cannot read dmd.localPolicy"
+    echo "pre-push: no local policy hook configured"
+fi
+
+# Refuse main before performing any compilation, including ref deletion.
+while read -r local_ref local_oid remote_ref remote_oid; do
+    if test "$remote_ref" = refs/heads/main; then
+        fail "direct pushes to main are refused; changes reach main through a Pull Request"
+    fi
+done < "$updates"
+
+cargo fmt --all -- --check || fail "formatting failed; run cargo fmt --all"
+cargo clippy --all-targets --locked || fail "Clippy failed; resolve the diagnostics"
+mkdir -p target
+native_lib_dir=$(mktemp -d "$root/target/native-clippy.XXXXXX") || fail "cannot create native lint directory"
+DMD_CORE_LIB_DIR="$native_lib_dir" cargo clippy -p dmd --features native --all-targets --locked || fail "native Clippy failed; resolve the diagnostics"
+rmdir "$native_lib_dir"
+cargo test --locked || fail "tests failed; resolve the failures"
+cargo test -p dmd-native --locked || fail "core-independent native tests failed; resolve the failures"
+
+mkdir -p target/policy
+rustc --edition=2024 -D warnings scripts/content_policy.rs -o target/policy/content-policy || fail "cannot compile the content policy"
+target/policy/content-policy "$1" < "$updates" || fail "outgoing content violates repository policy"
+
+if test "$policy_configured" = true; then
+    "$policy" "$@" < "$updates" || fail "local policy hook failed"
+fi

@@ -1,0 +1,42 @@
+[workspace]
+members = ["crates/protocol", "crates/cli", "crates/native", "crates/core-sys"]
+default-members = ["crates/protocol", "crates/cli"]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.97"
+license = "MIT"
+version = "0.1.0"
+
+[workspace.dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+thiserror = "2.0"
+serde_json = "1.0"
+dmd-protocol = { path = "crates/protocol" }
+dmd-native = { path = "crates/native", default-features = false }
+dmd-core-sys = { path = "crates/core-sys", default-features = false }
+
+[workspace.lints.rust]
+# Deny warnings here so plain cargo clippy is as strict locally as in CI.
+warnings = "deny"
+unsafe_op_in_unsafe_fn = "warn"
+
+# Choose lints individually: pedantic, nursery and restriction contain lints that
+# contradict this codebase and each other, and grow silently on a toolchain bump.
+# Never enable those groups wholesale. Thresholds live in clippy.toml.
+[workspace.lints.clippy]
+# Enforce expect (which fails once unneeded) with a reason; owner agreement is a
+# review obligation that no lint checks.
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+too_many_lines = "warn"
+cognitive_complexity = "warn"
+too_many_arguments = "warn"
+undocumented_unsafe_blocks = "warn"
+excessive_nesting = "warn"
+fn_params_excessive_bools = "warn"
+manual_let_else = "warn"
+redundant_else = "warn"
+branches_sharing_code = "warn"

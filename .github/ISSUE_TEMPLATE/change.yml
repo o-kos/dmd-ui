@@ -1,0 +1,23 @@
+name: Change request
+description: Propose a scoped improvement.
+title: "change: "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Problem and intended outcome
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Include explicit exclusions and architectural considerations.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Verifiable acceptance criteria
+    validations:
+      required: true

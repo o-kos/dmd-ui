@@ -1,0 +1,31 @@
+name: Bug report
+description: Report observable incorrect behavior.
+title: "bug: "
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include commands, inputs and relevant versions; omit private paths and data.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Include explicit exclusions and architectural considerations.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Verifiable acceptance criteria
+      description: State how a reviewer can confirm the fix.
+    validations:
+      required: true

@@ -1,0 +1,15 @@
+# Each value states what it protects against.
+
+# A function longer than this is a sequence of stages that has not been named.
+too-many-lines-threshold = 80
+# A backstop for branching density that line length misses.
+cognitive-complexity-threshold = 20
+# Clippy's default; past seven a call site needs position counting to be read,
+# and the parameters almost always group into a type.
+too-many-arguments-threshold = 7
+# At 4, if/else expressions inside loops trigger the lint because each arm counts
+# as a block; this is idiomatic Rust, not a nesting problem.
+excessive-nesting-threshold = 5
+# Clippy's default; past three a call is a row of bare true/false that needs the
+# signature to be read, and the flags want an enum or a struct.
+max-fn-params-bools = 3
