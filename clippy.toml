@@ -1,0 +1,4 @@
+# Keep functions small enough to review without broad lint groups.
+too-many-lines-threshold = 80
+cognitive-complexity-threshold = 20
+too-many-arguments-threshold = 7
