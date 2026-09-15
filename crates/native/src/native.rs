@@ -86,8 +86,29 @@ fn status(code: i32) -> Result<(), Error> {
     if code == sys::DMD_OK {
         Ok(())
     } else {
-        Err(Error::Core(code))
+        Err(Error::Contract("unexpected operation status"))
     }
+}
+
+// The callback must return an ABI status and diagnostic, keeping its span live
+// until this returns. Each production callback makes exactly one core call.
+unsafe fn call(
+    operation: &'static str,
+    invoke: impl FnOnce(&mut sys::DmdError) -> i32,
+) -> Result<i32, Error> {
+    let mut error = sys::DmdError::default();
+    let code = invoke(&mut error);
+    if code != sys::DMD_ERROR {
+        return Ok(code);
+    }
+    // SAFETY: The caller guarantees the diagnostic remains live. Copy before another
+    // core call; the ABI owns this span and forbids callers from freeing it.
+    let message = unsafe { copy_text(error.message) }?;
+    Err(Error::Core {
+        operation,
+        code: error.code,
+        message,
+    })
 }
 
 fn bytes(value: &str) -> sys::DmdBytes {
@@ -143,7 +164,11 @@ impl Signal {
         }
         let mut out = std::ptr::null_mut();
         // SAFETY: Path and output storage remain valid for this synchronous call.
-        status(unsafe { sys::dmd_signal_open(bytes(path), &mut out, std::ptr::null_mut()) })?;
+        status(unsafe {
+            call("dmd_signal_open", |error| {
+                sys::dmd_signal_open(bytes(path), &mut out, error)
+            })
+        }?)?;
         Ok(Self {
             handle: NonNull::new(out).ok_or(Error::Contract("null signal"))?,
             thread: PhantomData,
@@ -156,8 +181,10 @@ impl Signal {
         let mut out = sys::DmdStream::default();
         // SAFETY: The exclusively borrowed handle is live and output storage is valid.
         status(unsafe {
-            sys::dmd_signal_source(self.handle.as_ptr(), &mut out, std::ptr::null_mut())
-        })?;
+            call("dmd_signal_source", |error| {
+                sys::dmd_signal_source(self.handle.as_ptr(), &mut out, error)
+            })
+        }?)?;
         Stream::validate(out)
     }
 
@@ -165,8 +192,10 @@ impl Signal {
         let mut out = sys::DmdStream::default();
         // SAFETY: The exclusively borrowed handle is live and output storage is valid.
         status(unsafe {
-            sys::dmd_signal_output(self.handle.as_ptr(), &mut out, std::ptr::null_mut())
-        })?;
+            call("dmd_signal_output", |error| {
+                sys::dmd_signal_output(self.handle.as_ptr(), &mut out, error)
+            })
+        }?)?;
         Stream::validate(out)
     }
 
@@ -176,8 +205,10 @@ impl Signal {
         }
         // SAFETY: The handle is live, the target validated, and reading has not begun.
         status(unsafe {
-            sys::dmd_signal_target(self.handle.as_ptr(), &target.0, std::ptr::null_mut())
-        })
+            call("dmd_signal_target", |error| {
+                sys::dmd_signal_target(self.handle.as_ptr(), &target.0, error)
+            })
+        }?)
     }
 
     pub fn read(&mut self) -> Result<Option<Block>, Error> {
@@ -194,7 +225,11 @@ impl Signal {
         }
         self.finished = true;
         // SAFETY: The live handle has not previously been finished.
-        status(unsafe { sys::dmd_signal_finish(self.handle.as_ptr(), std::ptr::null_mut()) })
+        status(unsafe {
+            call("dmd_signal_finish", |error| {
+                sys::dmd_signal_finish(self.handle.as_ptr(), error)
+            })
+        }?)
     }
 
     pub fn drain(&mut self) -> Result<Option<Block>, Error> {
@@ -210,11 +245,15 @@ impl Signal {
         // SAFETY: The handle is live, state checked by the caller, and output storage is valid.
         let code = unsafe {
             if drain {
-                sys::dmd_signal_drain(self.handle.as_ptr(), &mut out, std::ptr::null_mut())
+                call("dmd_signal_drain", |error| {
+                    sys::dmd_signal_drain(self.handle.as_ptr(), &mut out, error)
+                })
             } else {
-                sys::dmd_signal_read(self.handle.as_ptr(), &mut out, std::ptr::null_mut())
+                call("dmd_signal_read", |error| {
+                    sys::dmd_signal_read(self.handle.as_ptr(), &mut out, error)
+                })
             }
-        };
+        }?;
         if code == sys::DMD_END {
             return Ok(None);
         }
@@ -274,13 +313,10 @@ impl Catalogue {
         let mut out = std::ptr::null_mut();
         // SAFETY: The path spans and output storage are live for the duration of the call.
         status(unsafe {
-            sys::dmd_catalogue_open(
-                paths.as_ptr(),
-                paths.len() as u64,
-                &mut out,
-                std::ptr::null_mut(),
-            )
-        })?;
+            call("dmd_catalogue_open", |error| {
+                sys::dmd_catalogue_open(paths.as_ptr(), paths.len() as u64, &mut out, error)
+            })
+        }?)?;
         Ok(Self {
             handle: NonNull::new(out).ok_or(Error::Contract("null catalogue"))?,
             thread: PhantomData,
@@ -291,8 +327,10 @@ impl Catalogue {
         let mut out = sys::DmdModule::default();
         // SAFETY: The live handle is exclusively borrowed and output storage is valid.
         let code = unsafe {
-            sys::dmd_catalogue_module(self.handle.as_ptr(), index, &mut out, std::ptr::null_mut())
-        };
+            call("dmd_catalogue_module", |error| {
+                sys::dmd_catalogue_module(self.handle.as_ptr(), index, &mut out, error)
+            })
+        }?;
         if code == sys::DMD_END {
             return Ok(None);
         }
@@ -316,14 +354,10 @@ impl Catalogue {
         let mut out = sys::DmdBytes::default();
         // SAFETY: The live handle, borrowed ID and output storage remain valid during the call.
         status(unsafe {
-            sys::dmd_catalogue_text(
-                self.handle.as_ptr(),
-                kind,
-                bytes(id),
-                &mut out,
-                std::ptr::null_mut(),
-            )
-        })?;
+            call("dmd_catalogue_text", |error| {
+                sys::dmd_catalogue_text(self.handle.as_ptr(), kind, bytes(id), &mut out, error)
+            })
+        }?)?;
         // SAFETY: The returned span is copied before any subsequent handle call.
         unsafe { copy_text(out) }
     }
@@ -332,13 +366,10 @@ impl Catalogue {
         let mut out = sys::DmdDiagnostic::default();
         // SAFETY: The live handle is exclusively borrowed and output storage is valid.
         let code = unsafe {
-            sys::dmd_catalogue_diagnostic(
-                self.handle.as_ptr(),
-                index,
-                &mut out,
-                std::ptr::null_mut(),
-            )
-        };
+            call("dmd_catalogue_diagnostic", |error| {
+                sys::dmd_catalogue_diagnostic(self.handle.as_ptr(), index, &mut out, error)
+            })
+        }?;
         if code == sys::DMD_END {
             return Ok(None);
         }
@@ -369,16 +400,18 @@ impl Catalogue {
         let mut out = std::ptr::null_mut();
         // SAFETY: The live catalogue and borrowed inputs remain valid for the call; the ABI copies them.
         status(unsafe {
-            sys::dmd_run_create(
-                self.handle.as_ptr(),
-                bytes(id),
-                parameters.as_ptr(),
-                parameters.len() as u64,
-                &stream.0,
-                &mut out,
-                std::ptr::null_mut(),
-            )
-        })?;
+            call("dmd_run_create", |error| {
+                sys::dmd_run_create(
+                    self.handle.as_ptr(),
+                    bytes(id),
+                    parameters.as_ptr(),
+                    parameters.len() as u64,
+                    &stream.0,
+                    &mut out,
+                    error,
+                )
+            })
+        }?)?;
         Ok(Run {
             handle: NonNull::new(out).ok_or(Error::Contract("null run"))?,
             thread: PhantomData,
@@ -421,14 +454,21 @@ impl Run {
             source_position: block.source_position,
         };
         // SAFETY: The live unfinalized run receives a validated buffer, borrowed synchronously.
-        status(unsafe { sys::dmd_run_submit(self.handle.as_ptr(), &raw, std::ptr::null_mut()) })
+        status(unsafe {
+            call("dmd_run_submit", |error| {
+                sys::dmd_run_submit(self.handle.as_ptr(), &raw, error)
+            })
+        }?)
     }
 
     pub fn next_result(&mut self) -> Result<Option<ResultData>, Error> {
         let mut out = sys::DmdResult::default();
         // SAFETY: The live handle is exclusively borrowed and output storage is valid.
-        let code =
-            unsafe { sys::dmd_run_next(self.handle.as_ptr(), &mut out, std::ptr::null_mut()) };
+        let code = unsafe {
+            call("dmd_run_next", |error| {
+                sys::dmd_run_next(self.handle.as_ptr(), &mut out, error)
+            })
+        }?;
         if code == sys::DMD_END {
             return Ok(None);
         }
@@ -448,7 +488,11 @@ impl Run {
         }
         self.finalized = true;
         // SAFETY: The live run has not been finalized previously.
-        status(unsafe { sys::dmd_run_finalize(self.handle.as_ptr(), std::ptr::null_mut()) })
+        status(unsafe {
+            call("dmd_run_finalize", |error| {
+                sys::dmd_run_finalize(self.handle.as_ptr(), error)
+            })
+        }?)
     }
 }
 
@@ -456,5 +500,62 @@ impl Drop for Run {
     fn drop(&mut self) {
         // SAFETY: This owner destroys its live handle exactly once on its creating thread.
         unsafe { sys::dmd_run_destroy(self.handle.as_ptr()) };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn core_diagnostic_is_owned_before_the_next_call() {
+        let mut borrowed = String::from("Cannot decode signal");
+        // SAFETY: The fixture supplies a valid diagnostic span until call returns.
+        let failure = unsafe {
+            call("dmd_signal_open", |error| {
+                assert_eq!(error.code, 0);
+                assert!(error.message.data.is_null());
+                assert_eq!(error.message.len, 0);
+                error.code = 42;
+                error.message = bytes(&borrowed);
+                sys::DMD_ERROR
+            })
+        }
+        .unwrap_err();
+        borrowed.clear();
+        let Error::Core {
+            operation,
+            code,
+            message,
+        } = &failure
+        else {
+            panic!("expected core diagnostic, got {failure}");
+        };
+        assert_eq!(*operation, "dmd_signal_open");
+        assert_eq!(*code, 42);
+        assert_eq!(message, "Cannot decode signal");
+        assert_eq!(
+            failure.to_string(),
+            "native operation dmd_signal_open failed with diagnostic 42: Cannot decode signal"
+        );
+    }
+
+    #[test]
+    fn empty_diagnostics_and_iteration_statuses_are_preserved() {
+        // SAFETY: A zero-length null span is permitted by the ABI.
+        let failure = unsafe {
+            call("dmd_run_next", |error| {
+                error.code = 7;
+                sys::DMD_ERROR
+            })
+        }
+        .unwrap_err();
+        assert!(
+            matches!(failure, Error::Core { operation: "dmd_run_next", code: 7, message } if message.is_empty())
+        );
+        for code in [sys::DMD_OK, sys::DMD_END] {
+            // SAFETY: These statuses have no diagnostic span to retain.
+            assert_eq!(unsafe { call("dmd_run_next", |_| code) }.unwrap(), code);
+        }
     }
 }
