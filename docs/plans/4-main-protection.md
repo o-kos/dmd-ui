@@ -4,7 +4,7 @@ Resolves #4.
 
 ## Overview
 
-`CONTRIBUTING.md` states that branch protection is unavailable, that the local
+`CONTRIBUTING.md` describes branch protection as unavailable, states that the local
 `pre-push` hook is the only enforcement point for direct pushes to `main`, and that the
 required full check is still to be configured. None of this holds any more. This change
 brings the contributor and agent instructions in line with the protection that is
@@ -46,7 +46,7 @@ protection, so an administrator can still push to or merge into `main` directly.
 
 ## Implementation steps
 
-- [ ] Describe the server-side protection of `main`, the required `ci/full` check and
+- [x] Describe the server-side protection of `main`, the required `ci/full` check and
       the administrator exception in `CONTRIBUTING.md`, and describe the hook as the
       local copy of the gate.
 - [ ] State in `AGENTS.md` that a merge waits for the required `ci/full` check.

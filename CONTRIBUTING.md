@@ -80,14 +80,22 @@ The separate native test step runs the core-independent tests that default membe
 
 Use `git push --no-verify` only as an explicit escape hatch. State the reason and the
 checks bypassed in the Pull Request. A bypass does not replace validation or review.
-The local hook is the enforcement point for direct pushes because branch protection
-is unavailable. Server-side merges do not execute it.
+Server-side protection requires a Pull Request to change `main`. No approving review
+count is required; stale approvals are dismissed when new commits arrive. The required
+`ci/full` check must come from GitHub Actions. History must be linear and all review
+conversations must be resolved. Force pushes to `main` and its deletion are forbidden.
+Administrators are not included in the protection, so an administrator can still push
+to or merge into `main` directly. The hook is an early, local copy of the gate that also
+refuses direct pushes to `main`; this refusal still matters because administrators are
+not included in the protection. Server-side merges do not execute it.
 
 Draft Pull Requests run formatting, default and native lints, policy tests and
 core-independent native tests on Linux, producing `ci/quick`. Ready Pull Requests,
 pushes to `main` and manual runs require Linux, Windows and macOS tests and release
-builds, producing `ci/full`. Skipped results do not count as successes. Configure the
-required full check once the workflow exists.
+builds, producing `ci/full`. Skipped results do not count as successes. The required
+check on `main` is `ci/full`, and the branch must be up to date with `main` before
+merging. Draft Pull Requests publish only `ci/quick`, so a Pull Request cannot merge
+until it is Ready and `ci/full` succeeds.
 
 ### Lint policy
 
