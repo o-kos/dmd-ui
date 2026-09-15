@@ -29,7 +29,9 @@ cargo run -p dmd -- --help
 cargo run -p dmd -- --backend replay list
 cargo fmt --all -- --check
 cargo clippy --all-targets --locked
+# Native Clippy with an empty core directory: see CONTRIBUTING.md for exact commands.
 cargo test --locked
+cargo test -p dmd-native --locked
 cargo build --release --locked
 cargo build -p dmd --no-default-features
 cargo build -p dmd --features native

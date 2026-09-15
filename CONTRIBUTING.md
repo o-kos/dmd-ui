@@ -74,7 +74,8 @@ cargo test -p dmd-native --locked
 
 The native Clippy step type-checks and lints native code without a core. Its library
 directory is empty: Clippy checks the native feature without building or linking the
-application binary. Both CI tiers run this step, using Bash on all three platforms.
+application binary. Both CI tiers run this step with Bash: on Linux for Draft Pull
+Requests and on Linux, Windows and macOS for the full tier.
 The separate native test step runs the core-independent tests that default members exclude.
 
 Use `git push --no-verify` only as an explicit escape hatch. State the reason and the
@@ -82,10 +83,11 @@ checks bypassed in the Pull Request. A bypass does not replace validation or rev
 The local hook is the enforcement point for direct pushes because branch protection
 is unavailable. Server-side merges do not execute it.
 
-Draft Pull Requests run formatting, lints and policy tests on Linux, producing
-`ci/quick`. Ready Pull Requests, pushes to `main` and manual runs require Linux,
-Windows and macOS tests and release builds, producing `ci/full`. Skipped results do
-not count as successes. Configure the required full check once the workflow exists.
+Draft Pull Requests run formatting, default and native lints, policy tests and
+core-independent native tests on Linux, producing `ci/quick`. Ready Pull Requests,
+pushes to `main` and manual runs require Linux, Windows and macOS tests and release
+builds, producing `ci/full`. Skipped results do not count as successes. Configure the
+required full check once the workflow exists.
 
 ### Lint policy
 

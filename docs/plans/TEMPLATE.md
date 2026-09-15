@@ -30,7 +30,10 @@ Describe alternatives and why they do not meet this change's needs.
 - [ ] `cargo fmt --all -- --check`
 - [ ] `cargo clippy --all-targets --locked`
       (warnings are denied in `[workspace.lints]`)
+- [ ] `cargo clippy -p dmd --features native --all-targets --locked` with an empty core
+      directory (see `CONTRIBUTING.md` for exact commands)
 - [ ] `cargo test --locked`
+- [ ] `cargo test -p dmd-native --locked`
 - [ ] `cargo build --release --locked`, after the gate passes
 
 ## Post-completion

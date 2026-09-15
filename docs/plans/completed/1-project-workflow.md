@@ -79,11 +79,9 @@ more expensive than starting with it:
       the dependency-source policy test.
 - [x] Add `CHANGELOG.md`.
 - [x] Complete validation.
-- [ ] Move this plan to `docs/plans/completed/` before final review.
+- [x] Move this plan to `docs/plans/completed/` before final review.
 
 ## Review follow-up
-
-Keep this plan in place and stop after local commits; do not push.
 
 - [x] Gate the core linking script behind a default-off feature, propagate native
       activation, and test workspace-wide and explicit crate selection without a core.
@@ -114,6 +112,15 @@ Keep this plan in place and stop after local commits; do not push.
       borrowed messages survive buffer reuse, and confirm that replacing the copy
       with an empty string fails the regression tests; preserve default build isolation.
 
+## Intent review
+
+- [x] Align the native Clippy and native test steps in `AGENTS.md` and the plan template
+      with the gate in `CONTRIBUTING.md` and the pre-push hook.
+- [x] Correct the CI tier descriptions to state their Bash platforms and include the
+      core-independent native tests in the quick tier.
+- [x] Remove the temporary review instruction and record the native checks and outgoing
+      content policy validation in this plan.
+
 ## Code quality policy
 
 The owner asked for an explicit Rust maintainability policy on top of Clippy's
@@ -141,7 +148,11 @@ defaults before this change lands.
 
 - [x] `cargo fmt --all -- --check`
 - [x] `cargo clippy --all-targets --locked`
+- [x] `cargo clippy -p dmd --features native --all-targets --locked` with an empty core
+      directory (see `CONTRIBUTING.md` for exact commands)
 - [x] `cargo test --locked`
+- [x] `cargo test -p dmd-native --locked`
+- [x] The content policy accepts every outgoing commit
 - [x] `cargo build --release --locked`, after the checks above pass
 - [x] `cargo build -p dmd --no-default-features` with no C or C++ compiler and no CMake
 - [x] `cargo build -p dmd --features native` without the core variables fails naming
