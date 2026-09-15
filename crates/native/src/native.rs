@@ -2,7 +2,10 @@ use std::{marker::PhantomData, ptr::NonNull, rc::Rc};
 
 use dmd_core_sys as sys;
 
-use crate::Error;
+use crate::{
+    Error,
+    diagnostic::{self, Status},
+};
 
 /// A validated sample layout and rational frame rate.
 #[derive(Clone, Copy, Debug)]
@@ -98,17 +101,15 @@ unsafe fn call(
 ) -> Result<i32, Error> {
     let mut error = sys::DmdError::default();
     let code = invoke(&mut error);
-    if code != sys::DMD_ERROR {
-        return Ok(code);
-    }
-    // SAFETY: The caller guarantees the diagnostic remains live. Copy before another
-    // core call; the ABI owns this span and forbids callers from freeing it.
-    let message = unsafe { copy_text(error.message) }?;
-    Err(Error::Core {
-        operation,
-        code: error.code,
-        message,
-    })
+    let (status, message) = if code == sys::DMD_ERROR {
+        // SAFETY: The caller guarantees the diagnostic remains live. Copy before another
+        // core call; the ABI owns this span and forbids callers from freeing it.
+        let message = unsafe { copy_text(error.message) }?;
+        (Status::Failed(error.code), Some(message))
+    } else {
+        (Status::Returned(code), None)
+    };
+    diagnostic::outcome(operation, status, message)
 }
 
 fn bytes(value: &str) -> sys::DmdBytes {
@@ -508,7 +509,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn core_diagnostic_is_owned_before_the_next_call() {
+    fn call_initializes_and_copies_the_ffi_diagnostic() {
         let mut borrowed = String::from("Cannot decode signal");
         // SAFETY: The fixture supplies a valid diagnostic span until call returns.
         let failure = unsafe {
@@ -523,25 +524,13 @@ mod tests {
         }
         .unwrap_err();
         borrowed.clear();
-        let Error::Core {
-            operation,
-            code,
-            message,
-        } = &failure
-        else {
-            panic!("expected core diagnostic, got {failure}");
-        };
-        assert_eq!(*operation, "dmd_signal_open");
-        assert_eq!(*code, 42);
-        assert_eq!(message, "Cannot decode signal");
-        assert_eq!(
-            failure.to_string(),
-            "native operation dmd_signal_open failed with diagnostic 42: Cannot decode signal"
+        assert!(
+            matches!(failure, Error::Core { message, .. } if message == "Cannot decode signal")
         );
     }
 
     #[test]
-    fn empty_diagnostics_and_iteration_statuses_are_preserved() {
+    fn call_accepts_empty_ffi_diagnostics_and_iteration_statuses() {
         // SAFETY: A zero-length null span is permitted by the ABI.
         let failure = unsafe {
             call("dmd_run_next", |error| {

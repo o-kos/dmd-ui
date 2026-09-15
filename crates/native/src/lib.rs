@@ -15,6 +15,9 @@ pub enum Error {
     Input(&'static str),
 }
 
+#[cfg(any(feature = "native", test))]
+mod diagnostic;
+
 #[cfg(feature = "native")]
 mod native;
 #[cfg(feature = "native")]

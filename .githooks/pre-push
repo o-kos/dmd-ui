@@ -42,6 +42,7 @@ native_lib_dir=$(mktemp -d "$root/target/native-clippy.XXXXXX") || fail "cannot 
 DMD_CORE_LIB_DIR="$native_lib_dir" cargo clippy -p dmd --features native --all-targets --locked || fail "native Clippy failed; resolve the diagnostics"
 rmdir "$native_lib_dir"
 cargo test --locked || fail "tests failed; resolve the failures"
+cargo test -p dmd-native --locked || fail "core-independent native tests failed; resolve the failures"
 
 mkdir -p target/policy
 rustc --edition=2024 -D warnings scripts/content_policy.rs -o target/policy/content-policy || fail "cannot compile the content policy"

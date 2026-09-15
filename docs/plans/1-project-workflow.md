@@ -106,7 +106,7 @@ Keep this plan in place and stop after local commits; do not push.
 ## Review round 2
 
 - [x] Normalize bare host candidates before policy comparisons and test uppercase hosts.
-- [ ] Run core-independent native diagnostic tests without the native feature in every gate.
+- [x] Run core-independent native diagnostic tests without the native feature in every gate.
 
 ## Code quality policy
 
