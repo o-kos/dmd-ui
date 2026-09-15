@@ -12,10 +12,14 @@ updates=$(mktemp) || fail "cannot save ref updates"
 trap 'rm -f "$updates"' EXIT HUP INT TERM
 cat > "$updates"
 
-policy=$(git config --get dmd.localPolicy || :)
-if test -n "$policy"; then
+policy_configured=false
+if policy=$(git config --get dmd.localPolicy); then
+    policy_configured=true
     echo "pre-push: local policy hook configured"
+    test -f "$policy" && test -x "$policy" || fail "dmd.localPolicy must name an executable file"
 else
+    status=$?
+    test "$status" -eq 1 || fail "cannot read dmd.localPolicy"
     echo "pre-push: no local policy hook configured"
 fi
 
@@ -34,7 +38,6 @@ mkdir -p target/policy
 rustc --edition=2024 -D warnings scripts/content_policy.rs -o target/policy/content-policy || fail "cannot compile the content policy"
 target/policy/content-policy < "$updates" || fail "outgoing content violates repository policy"
 
-if test -n "$policy"; then
-    test -x "$policy" || fail "dmd.localPolicy must name an executable"
+if test "$policy_configured" = true; then
     "$policy" "$@" < "$updates" || fail "local policy hook failed"
 fi

@@ -87,7 +87,7 @@ Keep this plan in place and stop after local commits; do not push.
 
 - [x] Gate the core linking script behind a default-off feature, propagate native
       activation, and test workspace-wide and explicit crate selection without a core.
-- [ ] Reject empty and invalid local policy settings and cover them in hook tests.
+- [x] Reject empty and invalid local policy settings and cover them in hook tests.
 - [ ] Clarify the disclosure boundary in the contributor and agent instructions.
 - [ ] Require scope and constraints in the bug form.
 - [ ] Shorten crate directory names while preserving package and binary names.

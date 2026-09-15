@@ -229,6 +229,15 @@ fn push_hook_enforces_content_and_local_policy() {
     let main = hook(&base, "main");
     assert!(!main.status.success());
     assert!(String::from_utf8_lossy(&main.stderr).contains("Pull Request"));
+    for invalid in ["", "missing-policy", "scripts", "note.txt"] {
+        git(&["config", "dmd.localPolicy", invalid]);
+        let rejected = hook(&base, "topic");
+        assert!(!rejected.status.success(), "accepted policy {invalid:?}");
+        let stderr = String::from_utf8_lossy(&rejected.stderr);
+        assert!(stderr.contains("dmd.localPolicy must name an executable file"));
+        assert!(!stderr.contains("no local policy hook configured"));
+    }
+    git(&["config", "--unset", "dmd.localPolicy"]);
     std::fs::write(
         fixture.join("note.txt"),
         ["", "private", "capture"].join("/"),
@@ -247,6 +256,8 @@ fn push_hook_enforces_content_and_local_policy() {
     assert!(!failed.status.success());
     assert!(String::from_utf8_lossy(&failed.stderr).contains("local policy hook configured"));
     assert!(String::from_utf8_lossy(&failed.stderr).contains("local policy hook failed"));
+    std::fs::write(&local, "exit 0\n").unwrap();
+    assert!(hook(&base, "topic").status.success());
 }
 
 #[cfg(unix)]
