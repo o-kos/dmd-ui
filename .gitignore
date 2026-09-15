@@ -1,0 +1,26 @@
+# Rust build output
+/target/
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Static libraries supplied to the native build from outside the repository
+*.a
+*.lib
+
+# Temporary files and directories
+~*
+_*
+.bak
+__pycache__
+
+# Optional project-local dependency cache
+/vendor/
+/.cargo/vendor.toml
+
+# Local signal captures and recordings
+/tests/signals/
+/tests/fixtures/local/
