@@ -48,11 +48,8 @@ fn host_like(value: &str) -> bool {
 }
 
 fn token_violation(token: &str) -> Option<&'static str> {
-    let token = token.trim_matches(|c: char| matches!(c, '.' | ',' | ':' | '!' | '?'));
-    if token.is_empty()
-        || token.chars().all(|c| c == '\\')
-        || matches!(token, "\\n" | "\\r" | "\\t" | "\\0")
-    {
+    let token = token.trim_end_matches(['.', ',', ':', '!', '?']);
+    if token.is_empty() {
         return None;
     }
     if let Some((scheme, address)) = token.split_once("://")
@@ -67,14 +64,19 @@ fn token_violation(token: &str) -> Option<&'static str> {
             return Some("e-mail address");
         }
     }
-    let drive = token.as_bytes().get(1) == Some(&b':')
+    let drive = token.as_bytes()[0].is_ascii_alphabetic()
+        && token.as_bytes().get(1) == Some(&b':')
         && token
             .as_bytes()
             .get(2)
             .is_some_and(|c| matches!(c, b'/' | b'\\'));
+    let unc = token
+        .strip_prefix("\\\\")
+        .and_then(|rest| rest.split_once(['\\', '/']))
+        .is_some_and(|(host, _)| !host.is_empty());
     if drive
         || token.starts_with('/')
-        || token.starts_with('\\')
+        || unc
         || token.starts_with('~') && token.as_bytes().get(1) == Some(&b'/')
     {
         // Standalone comment delimiters are syntax, not paths.
@@ -167,6 +169,10 @@ fn check_commit(commit: &str) -> Result<(), String> {
         "--unified=0",
         commit,
     ])?;
+    check_added_text(commit, &diff)
+}
+
+fn check_added_text(commit: &str, diff: &str) -> Result<(), String> {
     for (number, line) in diff
         .lines()
         .enumerate()
@@ -174,7 +180,8 @@ fn check_commit(commit: &str) -> Result<(), String> {
     {
         if let Some(reason) = violation(&line[1..]) {
             return Err(format!(
-                "commit {commit}: {reason} in added text at diff line {number}"
+                "commit {commit}: {reason} in added text at diff line {}",
+                number + 1
             ));
         }
     }
@@ -242,12 +249,54 @@ mod tests {
     #[test]
     fn permits_repository_paths_and_approved_urls() {
         for value in [
+            "./foo",
             "crates/dmd/src/main.rs",
             "Cargo.toml",
             "// Comment",
             "https://github.com/actions/checkout",
         ] {
             assert_eq!(violation(value), None, "rejected {value}");
+        }
+    }
+
+    #[test]
+    fn distinguishes_backslash_text_from_absolute_windows_paths() {
+        for value in [r"\", r"\n", r"\\n", r"\foo", r"\\host", r"C:foo"] {
+            assert_eq!(violation(value), None, "rejected {value}");
+        }
+        for value in [
+            ["", "", "host", "share"].join("\\"),
+            ["C:", "foo"].join("\\"),
+            ["C:", "foo"].join("/"),
+        ] {
+            assert_eq!(
+                violation(&value),
+                Some("absolute filesystem path"),
+                "missed {value}"
+            );
+        }
+    }
+
+    #[test]
+    fn reports_one_based_diff_line_numbers() {
+        let added = format!("+{}", ["", "private", "capture"].join("/"));
+        let diff = [
+            "diff --git a/file b/file",
+            "--- a/file",
+            "+++ b/file",
+            "@@ -1 +1,2 @@",
+            "-old text",
+            "+safe text",
+            &added,
+        ]
+        .join("\n");
+        for (text, line) in [(added.as_str(), 1), (diff.as_str(), 7)] {
+            assert_eq!(
+                check_added_text("test", text),
+                Err(format!(
+                    "commit test: absolute filesystem path in added text at diff line {line}"
+                ))
+            );
         }
     }
 
