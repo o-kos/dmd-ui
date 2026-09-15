@@ -38,7 +38,8 @@ as a URL on the W3C host.
 - The host of the SVG namespace joins the content policy's host allowlist. It belongs
   to a published standard that the disclosure rule explicitly excludes, and a valid
   standalone SVG cannot omit its namespace. Markup closing tags are recognised as tags
-  rather than paths.
+  only when the same checked text opened that element earlier; otherwise they remain
+  subject to the absolute-path check.
 
 ## Rejected alternatives
 

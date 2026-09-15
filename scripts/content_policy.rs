@@ -117,7 +117,7 @@ fn token_violation(token: &str) -> Option<&'static str> {
     None
 }
 
-fn strip_markup_closing_tag(text: &str) -> &str {
+fn strip_markup_closing_tag<'a>(text: &'a str, earlier: &str) -> &'a str {
     let Some((tag, rest)) = text.split_once('>') else {
         return text;
     };
@@ -128,6 +128,11 @@ fn strip_markup_closing_tag(text: &str) -> &str {
         && name
             .bytes()
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.' | b':'))
+        && earlier.split('<').skip(1).any(|part| {
+            part.strip_prefix(name).is_some_and(|rest| {
+                rest.starts_with(|c: char| c.is_whitespace() || matches!(c, '>' | '/'))
+            })
+        })
     {
         return rest;
     }
@@ -135,13 +140,16 @@ fn strip_markup_closing_tag(text: &str) -> &str {
 }
 
 fn violation(text: &str) -> Option<&'static str> {
+    let mut offset = 0;
     text.split('<')
         .enumerate()
         .flat_map(|(index, part)| {
+            let earlier = &text[..offset];
+            offset += part.len() + 1;
             let part = if index == 0 {
                 part
             } else {
-                strip_markup_closing_tag(part)
+                strip_markup_closing_tag(part, earlier)
             };
             part.split(|c: char| {
                 c.is_whitespace()
@@ -328,19 +336,47 @@ mod tests {
     #[test]
     fn permits_markup_closing_tags_and_complete_svg() {
         for value in [
-            concat!("<", "/", "svg>"),
-            concat!("<", "/", "g>"),
-            concat!("<", "/", "A0-_.:z>"),
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M24 28.2 A34 34 0 1 1 16 50 M8.5 51.5 L16 44 L23.5 51.5" fill="none" stroke="currentColor" stroke-width="11.6" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="38" cy="38" r="7.5"/><circle cx="62" cy="38" r="7.5"/><circle cx="38" cy="62" r="7.5"/><circle cx="62" cy="62" r="7.5"/></g></svg>"#,
+            "<svg></svg>",
+            "<g></g>",
+            "<A0-_.:z></A0-_.:z>",
+            "<g/></g>",
+            concat!("<g", "\t>", "<", "/", "g>"),
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><g fill="currentColor"></g></svg>"#,
+            include_str!(concat!(".", ".", "/", "assets/icons/wireroom-mono.svg")),
         ] {
             assert_eq!(violation(value), None, "rejected {value}");
         }
     }
 
     #[test]
+    fn rejects_closing_tags_without_an_earlier_matching_opening_tag() {
+        for name in ["private", "svg", "g", "A0-_.:z"] {
+            let closing = ["<", "/", name, ">"].concat();
+            for value in [
+                closing.clone(),
+                format!("<unrelated>{closing}"),
+                format!("{closing}<{name}>"),
+                format!("<{name}extra>{closing}"),
+                format!("<{}>{closing}", name.to_uppercase()),
+            ] {
+                assert_eq!(
+                    violation(&value),
+                    Some("absolute filesystem path"),
+                    "missed {value}"
+                );
+            }
+        }
+        let closing = ["<", "/", "private", ">"].concat();
+        assert_eq!(
+            violation(&format!("<g>{closing}")),
+            Some("absolute filesystem path")
+        );
+    }
+
+    #[test]
     fn rejects_paths_inside_and_outside_angle_brackets() {
         let path = ["", "private", "capture"].join("/");
-        for value in [path.clone(), format!("<{path}>"), format!("{}{path}", concat!("<", "/", "g>"))] {
+        for value in [path.clone(), format!("<{path}>"), format!("<g></g>{path}")] {
             assert_eq!(
                 violation(&value),
                 Some("absolute filesystem path"),
@@ -362,14 +398,12 @@ mod tests {
                     "missed {value}"
                 );
             }
-            if !matches!(name, "svg" | "g") {
-                let value = format!("<{token}>");
-                assert_eq!(
-                    violation(&value),
-                    Some("absolute filesystem path"),
-                    "missed {value}"
-                );
-            }
+            let value = format!("<{token}>");
+            assert_eq!(
+                violation(&value),
+                Some("absolute filesystem path"),
+                "missed {value}"
+            );
         }
     }
 
