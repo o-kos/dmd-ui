@@ -96,7 +96,7 @@ Keep this plan in place and stop after local commits; do not push.
 ## Review round 1
 
 - [x] Scope new-branch content checks to the destination remote and test two remotes.
-- [ ] Check merge filenames and added text against the first parent with a regression test.
+- [x] Check merge filenames and added text against the first parent with a regression test.
 - [ ] Parse URL authorities and SCP-style hosts with bypass and permitted-form tests.
 - [ ] Reject non-Unicode core variables while preserving the missing-directory diagnostic.
 - [ ] Preserve native diagnostic operation, code and owned message under the ABI rules.

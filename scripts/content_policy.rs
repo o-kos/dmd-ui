@@ -149,6 +149,7 @@ fn check_commit(commit: &str) -> Result<(), String> {
     let names = git(&[
         "diff-tree",
         "--root",
+        "--diff-merges=first-parent",
         "--no-commit-id",
         "--name-only",
         "-r",
@@ -164,7 +165,7 @@ fn check_commit(commit: &str) -> Result<(), String> {
         "show",
         "--format=",
         "--root",
-        "--first-parent",
+        "--diff-merges=first-parent",
         "--no-ext-diff",
         "--no-textconv",
         "--unified=0",

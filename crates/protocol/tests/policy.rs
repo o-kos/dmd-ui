@@ -411,3 +411,37 @@ fn push_hook_checks_new_branches_against_only_the_destination() {
         String::from_utf8_lossy(&accepted.stderr)
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn push_hook_checks_files_and_text_introduced_only_by_a_merge() {
+    for location in ["filename", "added text"] {
+        let fixture = hook_fixture();
+        let git = |args: &[&str]| fixture_git(&fixture, args);
+        git(&["commit", "--allow-empty", "-m", "Add safe base"]);
+        git(&["checkout", "-b", "side"]);
+        git(&["commit", "--allow-empty", "-m", "Add side history"]);
+        git(&["checkout", "topic"]);
+        git(&["commit", "--allow-empty", "-m", "Add topic history"]);
+        let base = git(&["rev-parse", "HEAD"]);
+        git(&["merge", "--no-ff", "--no-commit", "side"]);
+        let address = ["person", &["mail", "invalid"].join(".")].join("@");
+        let (name, content) = if location == "filename" {
+            (address.as_str(), "Safe content")
+        } else {
+            ("note.txt", address.as_str())
+        };
+        std::fs::write(fixture.join(name), content).unwrap();
+        git(&["add", name]);
+        git(&["commit", "-m", "Merge side history"]);
+        let head = git(&["rev-parse", "HEAD"]);
+        let rejected = invoke_hook(&fixture, &base, &head, "topic");
+        assert!(!rejected.status.success(), "accepted merge {location}");
+        assert!(
+            String::from_utf8_lossy(&rejected.stderr)
+                .contains(&format!("e-mail address in {location}")),
+            "{}",
+            String::from_utf8_lossy(&rejected.stderr)
+        );
+    }
+}
