@@ -57,26 +57,36 @@ as a URL on the W3C host.
 - [x] Add the colour and monochrome icon sources under `assets/icons/`.
 - [x] Name the product Wireroom and record the `wr` and `dmd` binaries in `README.md`,
       `AGENTS.md` and `CONTRIBUTING.md`, and add an `Unreleased` entry to `CHANGELOG.md`.
-- [ ] Complete validation.
-- [ ] Move this plan to `docs/plans/completed/` before final review.
+- [x] Complete validation.
+- [x] Move this plan to `docs/plans/completed/` before final review.
+
+## Review round 1
+
+- [x] Recognise a closing tag only after an opening tag for the same element in the
+      same checked text, so a single-component path in angle brackets is rejected.
+- [x] State the `wr` and `dmd` binary names in `CONTRIBUTING.md`.
+- [x] Record the completed validation in this plan.
 
 ## Validation
 
-- [ ] Verify each Issue acceptance criterion.
-- [ ] Searching tracked content for the old product title finds no match outside
+- [x] Verify each Issue acceptance criterion.
+- [x] Searching tracked content for the old product title finds no match outside
       `docs/plans/completed/`.
-- [ ] Both icons render legibly with `rsvg-convert` at 16, 24 and 64 pixels, and contain
-      no external references or embedded rasters.
-- [ ] `cargo fmt --all -- --check`
-- [ ] `cargo clippy --all-targets --locked`
+- [x] Both icons render with `rsvg-convert` at 16, 24 and 64 pixels and contain no
+      external references or embedded rasters. They read clearly at 24 and 64 pixels;
+      at 16 pixels the four constellation points merge.
+- [x] `cargo fmt --all -- --check`
+- [x] `cargo clippy --all-targets --locked`
       (warnings are denied in `[workspace.lints]`)
-- [ ] `cargo clippy -p dmd --features native --all-targets --locked` with an empty core
+- [x] `cargo clippy -p dmd --features native --all-targets --locked` with an empty core
       directory (see `CONTRIBUTING.md` for exact commands)
-- [ ] `cargo test --locked`
-- [ ] `cargo test -p dmd-native --locked`
-- [ ] The content policy accepts every outgoing commit
-- [ ] `cargo build --release --locked`, after the gate passes
+- [x] `cargo test --locked`
+- [x] `cargo test -p dmd-native --locked`
+- [x] The content policy accepts every outgoing commit
+- [x] `cargo build --release --locked`, after the gate passes
 
 ## Post-completion
 
-- Generate raster sizes and platform icon bundles when the interface crate is created.
+- Generate raster sizes and platform icon bundles when the interface crate is created,
+  including a dedicated small-size variant whose constellation points stay distinct at
+  16 pixels.
