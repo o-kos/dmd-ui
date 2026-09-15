@@ -22,6 +22,11 @@ notices in commits, Issues, Pull Requests or release notes.
 
 ## 3. Implement and validate
 
+Do not name or imply other repositories, internal hosts, organisations or filesystem
+paths outside this repository, or describe prior or parallel implementations. Public
+developer infrastructure, published standards and conventions, and tool-mandated
+filenames are outside this disclosure rule's scope.
+
 Make atomic commits with imperative English messages. Tick each plan step in the same
 commit that completes it. Never record commit hashes in plans. Keep the authoritative
 plan current when a decision changes, and explain the technical reason.

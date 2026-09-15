@@ -61,9 +61,15 @@ The CLI currently reports that each command is not implemented. Native builds re
 
 ## Engineering and workflow
 
-Write all repository content in English. Keep changes self-contained: no references to
-external projects, hosts, organisations or filesystem locations. Dependencies may use
-the package registry or workspace paths, never external path or git sources.
+Write all repository content in English.
+
+Do not name or imply other repositories, internal hosts, organisations or filesystem
+paths outside this repository, or describe prior or parallel implementations. Public
+developer infrastructure, published standards and conventions, and tool-mandated
+filenames are outside this disclosure rule's scope.
+
+Dependencies may use the package registry or workspace paths, never external path or
+git sources.
 Maintain individually selected workspace lints and inherit them in every crate.
 
 Start with an Issue containing verifiable acceptance criteria, then a branch named
