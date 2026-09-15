@@ -84,7 +84,7 @@ link targets, using Cargo link-library syntax. Then run:
 cargo build -p dmd --features native
 ```
 
-The ABI contract is `crates/dmd-core-sys/include/dmd_core.h`. Its implementation is not
+The ABI contract is `crates/core-sys/include/dmd_core.h`. Its implementation is not
 part of this repository. With `native` disabled, the core linking script performs no
 environment reads, probing or linking.
 

@@ -250,7 +250,7 @@ mod tests {
     fn permits_repository_paths_and_approved_urls() {
         for value in [
             "./foo",
-            "crates/dmd/src/main.rs",
+            "crates/cli/src/main.rs",
             "Cargo.toml",
             "// Comment",
             "https://github.com/actions/checkout",

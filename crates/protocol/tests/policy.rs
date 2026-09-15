@@ -68,7 +68,7 @@ fn dependency_policy_rejects_external_paths_and_git() {
     let root = workspace();
     let metadata = |source: Value, manifest: PathBuf| {
         serde_json::json!({
-            "workspace_root": root.join("crates/dmd-protocol"),
+            "workspace_root": root.join("crates/protocol"),
             "packages": [{"name": "fixture", "source": source, "manifest_path": manifest}],
         })
     };
@@ -87,7 +87,7 @@ fn dependency_policy_rejects_external_paths_and_git() {
             .unwrap_err()
             .contains("sources")
     );
-    let inside = metadata(Value::Null, root.join("crates/dmd-protocol/Cargo.toml"));
+    let inside = metadata(Value::Null, root.join("crates/protocol/Cargo.toml"));
     assert!(validate_sources(&inside).is_ok());
 }
 

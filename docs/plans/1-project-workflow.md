@@ -72,8 +72,8 @@ more expensive than starting with it:
       content checks and the optional local policy hook.
 - [x] Add the Cargo workspace: `rust-toolchain.toml`, `clippy.toml`, workspace lints and
       `default-members`.
-- [x] Add `crates/dmd-protocol` and `crates/dmd` so the gate has something to check.
-- [x] Add `crates/dmd-native` and `crates/dmd-core-sys` as optional crates, with the C
+- [x] Add `crates/protocol` and `crates/cli` so the gate has something to check.
+- [x] Add `crates/native` and `crates/core-sys` as optional crates, with the C
       ABI header, the linking build script and its diagnostic for missing variables.
 - [x] Add the CI workflow publishing `ci/quick` on Draft and `ci/full` otherwise, plus
       the dependency-source policy test.
@@ -90,22 +90,32 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] Reject empty and invalid local policy settings and cover them in hook tests.
 - [x] Clarify the disclosure boundary in the contributor and agent instructions.
 - [x] Require scope and constraints in the bug form.
-- [ ] Shorten crate directory names while preserving package and binary names.
-- [ ] Run the requested validation, including tests with inherited `GIT_DIR`.
+- [x] Shorten crate directory names while preserving package and binary names.
+- [x] Run the requested validation, including tests with inherited `GIT_DIR`.
 
 ## Validation
 
-- [ ] `cargo fmt --all -- --check`
-- [ ] `cargo clippy --all-targets --locked`
-- [ ] `cargo test --locked`
-- [ ] `cargo build --release --locked`, after the checks above pass
+- [x] `cargo fmt --all -- --check`
+- [x] `cargo clippy --all-targets --locked`
+- [x] `cargo test --locked`
+- [x] `cargo build --release --locked`, after the checks above pass
 - [ ] `cargo build -p dmd --no-default-features` with no C++ toolchain present
-- [ ] `cargo build -p dmd --features native` without the core variables fails naming
+- [x] `cargo build -p dmd --features native` without the core variables fails naming
       only those variables
-- [ ] No native probing or linking occurs while `native` is disabled
-- [ ] The dependency-source policy test rejects a path or git source outside the
+- [x] No native probing or linking occurs while `native` is disabled
+- [x] The dependency-source policy test rejects a path or git source outside the
       workspace
-- [ ] The hook refuses a direct push to `main` and fails on a planted generic violation
+- [x] The hook refuses a direct push to `main` and fails on a planted generic violation
+
+### Review validation results
+
+- Formatting, Clippy and the full test suite pass, including with inherited `GIT_DIR`.
+- With all three core variables unset, workspace-wide checks and test compilation,
+  explicit `dmd-core-sys` builds, release builds and CLI no-default-feature builds pass.
+- Enabling the CLI native feature fails with the expected core-variable diagnostic.
+- Hook tests reject empty values, missing files, directories and non-executable files;
+  executable hooks propagate both success and failure.
+- Package names and the `dmd` binary name remain unchanged after the directory rename.
 
 ## Post-completion
 

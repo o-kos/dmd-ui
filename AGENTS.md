@@ -10,10 +10,10 @@ interface toolkit is undecided; do not create an interface crate yet.
 
 ## Workspace
 
-- `crates/dmd-protocol`: shared protocol boundary; currently only its version.
-- `crates/dmd`: command-line surface and backend selection.
-- `crates/dmd-native`: safe resource ownership over the C ABI.
-- `crates/dmd-core-sys`: C header, matching raw declarations and static linking.
+- `crates/protocol`: shared protocol boundary; currently only its version.
+- `crates/cli`: command-line surface and backend selection.
+- `crates/native`: safe resource ownership over the C ABI.
+- `crates/core-sys`: C header, matching raw declarations and static linking.
 - `docs/plans`: active plans; `docs/plans/completed`: finished plans.
 - `.github/scripts`: CI decision logic; `scripts`: local policy checks.
 
