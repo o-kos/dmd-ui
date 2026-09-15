@@ -79,8 +79,9 @@ fn token_violation(token: &str) -> Option<&'static str> {
         || unc
         || token.starts_with('~') && token.as_bytes().get(1) == Some(&b'/')
     {
-        // Standalone comment delimiters are syntax, not paths.
-        if !matches!(token, "/" | "//" | "///" | "/*" | "/**") {
+        // Standalone comment delimiters are syntax, and the null device is the same on
+        // every Unix host, so neither discloses anything about an environment.
+        if !matches!(token, "/" | "//" | "///" | "/*" | "/**" | "/dev/null") {
             return Some("absolute filesystem path");
         }
     }
@@ -253,6 +254,7 @@ mod tests {
             "crates/cli/src/main.rs",
             "Cargo.toml",
             "// Comment",
+            "cmd < /dev/null",
             "https://github.com/actions/checkout",
         ] {
             assert_eq!(violation(value), None, "rejected {value}");
