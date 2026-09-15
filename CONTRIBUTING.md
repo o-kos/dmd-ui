@@ -58,7 +58,8 @@ validating it and executes exactly that path, with the same arguments and ref-up
 input as pre-push, propagating failure. Keep environment-specific policy outside the tree.
 Configure it with `git config dmd.localPolicy <executable>`.
 
-The gate stops at the first failed command and explains the failure:
+Run the full local gate before every push. It stops at the first failed command and
+explains the failure:
 
 ```sh
 cargo fmt --all -- --check
@@ -75,6 +76,117 @@ Draft Pull Requests run formatting, lints and policy tests on Linux, producing
 `ci/quick`. Ready Pull Requests, pushes to `main` and manual runs require Linux,
 Windows and macOS tests and release builds, producing `ci/full`. Skipped results do
 not count as successes. Configure the required full check once the workflow exists.
+
+### Lint policy
+
+`[workspace.lints]` names every lint enforced beyond Clippy's defaults. Every crate
+inherits it with `lints.workspace = true`. Thresholds live in `clippy.toml`, with one
+comment per value explaining what it protects against. Warnings are errors as a
+repository property, never through a `-D warnings` flag passed to Cargo.
+
+Enable lints one at a time. Never enable the `pedantic`, `nursery` or `restriction`
+groups wholesale: they contain lints that contradict this codebase and each other,
+and a group grows silently on a toolchain bump. Adding a lint or changing a threshold
+is deliberate; explain why in the Pull Request.
+
+When a maintainability lint fires, change the code first. A long function is a
+sequence of stages that has not been named; a wide signature is a type that has not
+been written. Raising a threshold requires the agreement described under
+[Lint suppressions](#lint-suppressions).
+
+Watch the surveying trap: `warnings = "deny"` makes findings errors, and a crate that
+fails to compile is never linted, so findings in dependants stay hidden. Survey with:
+
+```sh
+cargo clippy --all-targets --locked -- -W warnings
+```
+
+### Lint suppressions
+
+Every suppression needs project-owner agreement before it is pushed: `#[allow]`,
+`#[expect]`, `-A` flags, and levels relaxed in `Cargo.toml` or `clippy.toml`, including
+raised thresholds. Refactor first; inconvenience is not an argument that a lint is
+wrong. When a suppression is unavoidable, ask explicitly, say what was tried, and
+write `#[expect(..., reason = "...")]` so it fails once unneeded and records the
+reason. An unexplained suppression nobody re-reads turns the gate into a formality.
+The `allow_attributes` and `allow_attributes_without_reason` lints enforce the shape;
+owner agreement is a review obligation that no lint checks.
+
+### CI configuration
+
+The workflow never restates formatting or lint commands with different flags.
+Configuration lives in the repository where Cargo finds it, so local and
+merge-blocking results cannot drift. Tighten a rule by changing the configuration,
+not the workflow.
+
+### Nested conditionals and comments
+
+Do not write nested, multi-level, opaque `if` chains. A reader must be able to tell
+what a branch does without holding three conditions and a later early return in mind
+at once. No lint catches this; it is a review obligation. Two recurring shapes need
+particular attention.
+
+First, a flag can play two roles: selecting stdout output and controlling a later
+early return. This repeats the decision about `quiet`:
+
+```rust
+if quiet {
+    record_completion();
+} else if json {
+    write_json();
+} else {
+    write_text();
+}
+if quiet {
+    return;
+}
+write_summary();
+```
+
+Decide once, in one place. Name the outcome with an enum or a `match`, or use a single
+early return at the top:
+
+```rust
+if quiet {
+    record_completion();
+    return;
+}
+if json {
+    write_json();
+} else {
+    write_text();
+}
+write_summary();
+```
+
+Second, a condition can be repeated inside its own `else`. Here, `save_results` is
+tested both in the combined condition and inside its `else`:
+
+```rust
+if save_results && json {
+    write_json_file();
+} else {
+    if save_results {
+        write_text_file();
+    }
+}
+```
+
+Hoist the shared condition so each decision has one job, or split the function so
+each half has one job:
+
+```rust
+if save_results {
+    if json {
+        write_json_file();
+    } else {
+        write_text_file();
+    }
+}
+```
+
+Write code comments only when intent is not evident from the code, and keep them
+concise.
 
 ## Native builds
 
@@ -170,8 +282,8 @@ escalate unresolved findings to the project owner.
 When asking the owner to review, summarise the automatic review: its findings, which
 were accepted and how they were addressed, which were declined and why, and whether
 the final round was clean. Resolve every blocking finding and obtain approval; a
-clean automated gate is not review. Obtain project-owner agreement for every lint
-suppression before pushing it.
+clean automated gate is not review. Check compliance with
+[Lint suppressions](#lint-suppressions).
 
 ## 5. Complete
 

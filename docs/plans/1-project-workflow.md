@@ -112,7 +112,7 @@ defaults before this change lands.
 
 - [x] Add the lints, move their levels under `warnings = "deny"`, and document each
       threshold in `clippy.toml`; refactor any code the new lints flag.
-- [ ] Document the lint policy, the suppression rule and the `if`-chain review
+- [x] Document the lint policy, the suppression rule and the `if`-chain review
       obligation in `CONTRIBUTING.md` and `AGENTS.md`, and state that CI never restates
       lint configuration with different flags.
 

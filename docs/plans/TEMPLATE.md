@@ -29,6 +29,7 @@ Describe alternatives and why they do not meet this change's needs.
 - [ ] Verify each Issue acceptance criterion.
 - [ ] `cargo fmt --all -- --check`
 - [ ] `cargo clippy --all-targets --locked`
+      (warnings are denied in `[workspace.lints]`)
 - [ ] `cargo test --locked`
 - [ ] `cargo build --release --locked`, after the gate passes
 

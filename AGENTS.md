@@ -56,8 +56,9 @@ The CLI currently reports that each command is not implemented. Native builds re
 - Event protocol, recording format and C ABI versions are independent.
 - Use `thiserror` in libraries and `anyhow` in binaries. Non-test code must not
   `unwrap` or `expect` on external data.
-- Every lint suppression requires project-owner agreement before pushing, uses
-  `#[expect(..., reason = "...")]`, and is a last resort after refactoring.
+- Every lint suppression, including a relaxed threshold, requires project-owner
+  agreement before pushing. Refactor first; use `#[expect(..., reason = "...")]`
+  when unavoidable. See `CONTRIBUTING.md` for the full suppression rule.
 
 ## Engineering and workflow
 
@@ -70,7 +71,13 @@ filenames are outside this disclosure rule's scope.
 
 Dependencies may use the package registry or workspace paths, never external path or
 git sources.
-Maintain individually selected workspace lints and inherit them in every crate.
+
+- Warnings are errors as a repository property, never a `-D warnings` flag to Cargo.
+- Run the full local gate before every push.
+- Select workspace lints individually and inherit them in every crate; document each
+  threshold in `clippy.toml`. Never enable lint groups wholesale.
+- Review for opaque nested conditional chains; see `CONTRIBUTING.md` for examples.
+- Comment only intent that is not evident from the code, and keep comments concise.
 
 Start with an Issue containing verifiable acceptance criteria, then a branch named
 `<type>/<issue>-<short-description>`. Commit a plan before implementation and open a
