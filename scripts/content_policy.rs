@@ -56,11 +56,21 @@ fn token_violation(token: &str) -> Option<&'static str> {
         && !scheme.is_empty()
         && !address.is_empty()
     {
-        let host = address.split(['/', ':', '?', '#']).next().unwrap_or("");
-        return (!HOSTS.contains(&host)).then_some("unapproved URL host");
+        let authority = address.split(['/', '?', '#']).next().unwrap_or("");
+        let host_port = authority.rsplit('@').next().unwrap_or("");
+        let host = host_port.split(':').next().unwrap_or("").to_ascii_lowercase();
+        return (!HOSTS.contains(&host.as_str())).then_some("unapproved URL host");
     }
-    if let Some((user, host)) = token.split_once('@') {
-        if !user.is_empty() && host_like(host) {
+    if let Some((user, address)) = token.split_once('@') {
+        if let Some((host, path)) = address.split_once(':')
+            && !user.is_empty()
+            && !host.is_empty()
+            && !path.is_empty()
+        {
+            return (!HOSTS.contains(&host.to_ascii_lowercase().as_str()))
+                .then_some("unapproved host");
+        }
+        if !user.is_empty() && host_like(address) {
             return Some("e-mail address");
         }
     }
@@ -271,6 +281,42 @@ mod tests {
             "https://github.com/actions/checkout",
         ] {
             assert_eq!(violation(value), None, "rejected {value}");
+        }
+    }
+
+    #[test]
+    fn checks_url_authorities_and_scp_hosts() {
+        let host = ["service", "invalid"].join(".");
+        for address in [
+            ["https:", "", &format!("github.com:token@{host}"), "repo"].join("/"),
+            ["https:", "", &format!("user@github.com@{host}:443"), "repo"].join("/"),
+            ["https:", "", &format!("{host}?query")].join("/"),
+            ["https:", "", &format!("{host}#fragment")].join("/"),
+        ] {
+            assert_eq!(violation(&address), Some("unapproved URL host"), "missed {address}");
+        }
+        for host in [host.as_str(), "service"] {
+            let address = format!("git@{host}:team/repo");
+            assert_eq!(violation(&address), Some("unapproved host"), "missed {address}");
+        }
+        let email = ["person", &host].join("@");
+        assert_eq!(violation(&email), Some("e-mail address"));
+        for address in [
+            "https://GitHub.COM:443/owner/repo",
+            "https://user:token@github.com/owner/repo",
+            "https://user@github.com?query",
+            "https://github.com#fragment",
+            "git@github.com:owner/repo",
+            "git@GitHub.COM:owner/repo",
+        ] {
+            assert_eq!(violation(address), None, "rejected {address}");
+        }
+    }
+
+    #[test]
+    fn policy_source_obeys_its_own_rules() {
+        for (number, line) in include_str!("content_policy.rs").lines().enumerate() {
+            assert_eq!(violation(line), None, "line {}: {line}", number + 1);
         }
     }
 
