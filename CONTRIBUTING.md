@@ -1,4 +1,4 @@
-# Contributing
+# Contributing to Wireroom
 
 ## 1. Define the change
 

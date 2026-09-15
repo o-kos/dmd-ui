@@ -54,7 +54,7 @@ as a URL on the W3C host.
 - [x] Allow the SVG namespace host and recognise markup closing tags in the content
       policy, with unit tests.
 - [x] Add the colour and monochrome icon sources under `assets/icons/`.
-- [ ] Name the product Wireroom and record the `wr` and `dmd` binaries in `README.md`,
+- [x] Name the product Wireroom and record the `wr` and `dmd` binaries in `README.md`,
       `AGENTS.md` and `CONTRIBUTING.md`, and add an `Unreleased` entry to `CHANGELOG.md`.
 - [ ] Complete validation.
 - [ ] Move this plan to `docs/plans/completed/` before final review.
@@ -62,7 +62,8 @@ as a URL on the W3C host.
 ## Validation
 
 - [ ] Verify each Issue acceptance criterion.
-- [ ] `git grep -n "dmd-ui"` finds no match outside `docs/plans/completed/`.
+- [ ] Searching tracked content for the old product title finds no match outside
+      `docs/plans/completed/`.
 - [ ] Both icons render legibly with `rsvg-convert` at 16, 24 and 64 pixels, and contain
       no external references or embedded rasters.
 - [ ] `cargo fmt --all -- --check`

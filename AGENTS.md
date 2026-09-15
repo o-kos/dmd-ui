@@ -2,11 +2,12 @@
 
 ## Purpose and architecture
 
-The interface is the product: an application for demodulating recorded signals and
+Wireroom is the product: an application for demodulating recorded signals and
 inspecting results. It starts `dmd` and consumes its events. `dmd` is also a complete
 command-line tool. Only the optional native layer reaches the signal core through the
 C ABI. Everything implementing that ABI is outside this repository's scope. The
-interface toolkit is undecided; do not create an interface crate yet.
+interface toolkit is undecided; do not create an interface crate yet. Once created,
+the interface crate builds the `wr` binary, while `dmd` keeps its name.
 
 ## Workspace
 
@@ -14,6 +15,7 @@ interface toolkit is undecided; do not create an interface crate yet.
 - `crates/cli`: command-line surface and backend selection.
 - `crates/native`: safe resource ownership over the C ABI.
 - `crates/core-sys`: C header, matching raw declarations and static linking.
+- `assets/icons/`: colour and monochrome Wireroom icon sources.
 - `docs/plans`: active plans; `docs/plans/completed`: finished plans.
 - `.github/scripts`: CI decision logic; `scripts`: local policy checks.
 
