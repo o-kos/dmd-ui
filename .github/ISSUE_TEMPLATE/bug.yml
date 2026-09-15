@@ -16,6 +16,13 @@ body:
     validations:
       required: true
   - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: Include explicit exclusions and architectural considerations.
+    validations:
+      required: true
+  - type: textarea
     id: acceptance
     attributes:
       label: Verifiable acceptance criteria

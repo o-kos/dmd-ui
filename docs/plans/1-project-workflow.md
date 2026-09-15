@@ -89,7 +89,7 @@ Keep this plan in place and stop after local commits; do not push.
       activation, and test workspace-wide and explicit crate selection without a core.
 - [x] Reject empty and invalid local policy settings and cover them in hook tests.
 - [x] Clarify the disclosure boundary in the contributor and agent instructions.
-- [ ] Require scope and constraints in the bug form.
+- [x] Require scope and constraints in the bug form.
 - [ ] Shorten crate directory names while preserving package and binary names.
 - [ ] Run the requested validation, including tests with inherited `GIT_DIR`.
 
