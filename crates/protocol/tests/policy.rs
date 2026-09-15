@@ -64,6 +64,43 @@ fn dependency_sources_stay_in_the_workspace_or_registry() {
 }
 
 #[test]
+fn default_build_graph_excludes_native_build_tools() {
+    // At the workspace root Cargo selects default-members. Include normal edges so
+    // build dependencies of transitive dependencies cannot escape the check.
+    let output = Command::new(env!("CARGO"))
+        .current_dir(workspace())
+        .args([
+            "tree",
+            "--locked",
+            "--offline",
+            "--edges",
+            "normal,build",
+            "--prefix",
+            "none",
+            "--format",
+            "{p}",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let graph = String::from_utf8(output.stdout).unwrap();
+    assert!(!graph.trim().is_empty(), "default build graph is empty");
+    for name in graph
+        .lines()
+        .filter_map(|line| line.split_whitespace().next())
+    {
+        assert!(
+            !["cc", "cmake", "bindgen", "pkg-config"].contains(&name),
+            "default build graph contains prohibited native build tool {name}:\n{graph}"
+        );
+    }
+}
+
+#[test]
 fn dependency_policy_rejects_external_paths_and_git() {
     let root = workspace();
     let metadata = |source: Value, manifest: PathBuf| {

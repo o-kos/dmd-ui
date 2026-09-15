@@ -99,7 +99,7 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] `cargo clippy --all-targets --locked`
 - [x] `cargo test --locked`
 - [x] `cargo build --release --locked`, after the checks above pass
-- [ ] `cargo build -p dmd --no-default-features` with no C++ toolchain present
+- [x] `cargo build -p dmd --no-default-features` with no C or C++ compiler and no CMake
 - [x] `cargo build -p dmd --features native` without the core variables fails naming
       only those variables
 - [x] No native probing or linking occurs while `native` is disabled
@@ -116,6 +116,10 @@ Keep this plan in place and stop after local commits; do not push.
 - Hook tests reject empty values, missing files, directories and non-executable files;
   executable hooks propagate both success and failure.
 - Package names and the `dmd` binary name remain unchanged after the directory rename.
+- The orchestrator verified a clean no-default-feature build with `CC`, `CXX` and
+  `cmake` replaced by a failing stub. The system linker remains required for a Rust
+  binary. The default build graph policy test excludes `cc`, `cmake`, `bindgen` and
+  `pkg-config`, including transitive build dependencies.
 
 ## Post-completion
 
