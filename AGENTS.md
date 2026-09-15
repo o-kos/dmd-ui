@@ -112,4 +112,6 @@ review.
 Install `.githooks` with `git config core.hooksPath .githooks`. Run the validation gate
 before review. Route out-of-scope findings to separate Issues. Complete external review,
 move the plan to `completed/`, rebuild release, mark Ready, and merge by squash only.
+A merge waits for the required `ci/full` check to succeed on a branch that is up to date
+with `main`.
 See `CONTRIBUTING.md` for the complete lifecycle and bypass rules.

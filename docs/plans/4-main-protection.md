@@ -49,7 +49,7 @@ protection, so an administrator can still push to or merge into `main` directly.
 - [x] Describe the server-side protection of `main`, the required `ci/full` check and
       the administrator exception in `CONTRIBUTING.md`, and describe the hook as the
       local copy of the gate.
-- [ ] State in `AGENTS.md` that a merge waits for the required `ci/full` check.
+- [x] State in `AGENTS.md` that a merge waits for the required `ci/full` check.
 - [ ] Complete validation.
 - [ ] Move this plan to `docs/plans/completed/` before final review.
 
