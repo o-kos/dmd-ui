@@ -78,7 +78,7 @@ more expensive than starting with it:
 - [x] Add the CI workflow publishing `ci/quick` on Draft and `ci/full` otherwise, plus
       the dependency-source policy test.
 - [x] Add `CHANGELOG.md`.
-- [ ] Complete validation.
+- [x] Complete validation.
 - [ ] Move this plan to `docs/plans/completed/` before final review.
 
 ## Review follow-up
@@ -101,7 +101,7 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] Reject non-Unicode core variables while preserving the missing-directory diagnostic.
 - [x] Preserve native diagnostic operation, code and owned message under the ABI rules.
 - [x] Type-check and lint native code without a core in the hook and both CI jobs.
-- [ ] Complete the full validation gate and leave the plan move pending.
+- [x] Complete the full validation gate and leave the plan move pending.
 
 ## Code quality policy
 
