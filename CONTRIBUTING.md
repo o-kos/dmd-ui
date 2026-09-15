@@ -15,10 +15,12 @@ example, `docs/1-project-workflow`). Copy `docs/plans/TEMPLATE.md` to a numbered
 that plan before implementation. This bootstrap's pre-existing branch is the sole
 exception to that ordering.
 
+The implementer works in a dedicated Git worktree checked out on the Issue branch,
+outside the main checkout. The main checkout stays on `main`.
+
 Open a Draft Pull Request early. Include a closing keyword such as `Resolves #1`, a
 link to the plan and the intended behavior. Keep the description aligned with the final
-change. Use English throughout; do not include attribution trailers or generation
-notices in commits, Issues, Pull Requests or release notes.
+change. Use English throughout.
 
 ## 3. Implement and validate
 
@@ -30,6 +32,11 @@ filenames are outside this disclosure rule's scope.
 Make atomic commits with imperative English messages. Tick each plan step in the same
 commit that completes it. Never record commit hashes in plans. Keep the authoritative
 plan current when a decision changes, and explain the technical reason.
+
+Never state or imply in commit messages, Pull Requests, issues or release notes that
+an AI tool was used during development. Do not add co-author trailers or generation
+notices. Contributor and agent instructions describing the tooling are outside this
+rule's scope.
 
 Install the local gate once per checkout:
 
@@ -90,12 +97,78 @@ environment reads, probing or linking.
 
 ## 4. External review
 
-Once the gate passes, request an independent reviewer. Provide the Issue, plan, diff,
-validation results and known limitations. The reviewer checks acceptance criteria,
-architecture, error handling, tests and scope. Record actionable findings in the Pull
-Request, fix them in focused commits, and rerun affected checks. Route out-of-scope
-findings to Issues. Resolve every blocking finding and obtain approval; do not treat a
-clean automated run as review. Obtain project-owner agreement for every lint
+### Roles and invocation settings
+
+Use these fixed roles. Pass the model and reasoning effort explicitly on every
+invocation; never rely on machine-local defaults. Apply the listed access mode too.
+
+| Role | Performed by | Model | Reasoning effort and access |
+| --- | --- | --- | --- |
+| Planning and intent review | Claude | Opus | high |
+| Dispatch, Git and Pull Request routine | Claude | Sonnet | medium |
+| Reconnaissance | Codex | `gpt-6-astra` | medium, read-only |
+| Implementation | Codex | `gpt-6-astra` | high, workspace-write |
+| Mechanical code review | Codex | `gpt-5.6-sol` | high, read-only |
+
+Select the mechanical reviewer from the implementer, using the following table. This
+selection overrides the usual mechanical-review role when Claude implements the
+change, and stays fixed across all rounds of the same review.
+
+| Implementer | Reviewer | CLI model | Effort |
+| --- | --- | --- | --- |
+| Codex GPT-6 Astra | Codex GPT-5.6 Sol | `gpt-5.6-sol` | high |
+| Claude | Codex GPT-6 Astra | `gpt-6-astra` | high |
+
+### First tier: mechanical code review
+
+Once the validation gate passes, write `review-prompt.md` for the particular change.
+Name the exact diff to inspect (base and head, plus any uncommitted changes included)
+and the Issues it closes. Provide the plan, validation results and known limitations.
+Tell the reviewer to read `AGENTS.md` and `CONTRIBUTING.md` first. Define the review
+categories for the change: rank rarely executed code whose failures are expensive,
+such as workflows, hooks and release scripts, first; then cover architecture, error
+handling, tests and scope. Exclude checks already covered by the automated gate.
+Require an explicit "nothing found" for each category without a substantive finding;
+do not ask for a quota of findings or accept invented findings to fill a category.
+
+Set `review_model` from the reviewer-selection table and invoke the reviewer read-only:
+
+```sh
+codex exec -s read-only --model "${review_model:?set from the table}" \
+  -c 'model_reasoning_effort="high"' \
+  -C "$(git rev-parse --show-toplevel)" "$(cat review-prompt.md)" < /dev/null
+```
+
+Stdin must be closed with `< /dev/null`; without it the command waits for input
+forever. Do not use `codex review --base <branch>`: it cannot take a custom prompt.
+
+The orchestrator returns findings to the implementer as one structured list per
+round, with category, severity, location, reasoning and requested correction. Agents
+do not negotiate with each other; the orchestrator decides which findings to accept
+or decline. Fix accepted findings in focused commits and rerun affected checks. Route
+out-of-scope findings to separate Issues.
+
+Repeat with the same reviewer until a round returns nothing substantive. Each later
+prompt names what was fixed and what was declined, explains each decision, and asks
+the reviewer to challenge the reasoning behind every decline. A reviewer that never
+disagrees is worth nothing.
+
+### Second tier: intent review
+
+After the mechanical review is clean, the orchestrator (Claude Opus, explicitly at
+high reasoning effort) reviews the final diff once against the approved plan, owner
+decisions and every invariant. This tier asks whether the result is what was requested
+and preserves every invariant; code correctness was covered by the first tier.
+Return any findings as one structured list to the implementer under the same
+orchestrator decision rule. Allow at most two correction rounds in this tier, then
+escalate unresolved findings to the project owner.
+
+### Owner review
+
+When asking the owner to review, summarise the automatic review: its findings, which
+were accepted and how they were addressed, which were declined and why, and whether
+the final round was clean. Resolve every blocking finding and obtain approval; a
+clean automated gate is not review. Obtain project-owner agreement for every lint
 suppression before pushing it.
 
 ## 5. Complete

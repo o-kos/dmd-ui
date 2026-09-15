@@ -78,6 +78,28 @@ Draft Pull Request early with a closing keyword. Complete each plan checkbox in 
 commit that completes its work; never record commit hashes. Commit atomic changes with
 English imperative messages and no attribution trailers or generation notices.
 
+Never state or imply in commit messages, Pull Requests, issues or release notes that
+an AI tool was used during development. Do not add co-author trailers or generation
+notices. Contributor and agent instructions describing the tooling are outside this
+rule's scope.
+
+Use the fixed roles in `CONTRIBUTING.md`, passing model and reasoning effort explicitly
+on every invocation: Claude Opus at high for planning and intent review; Claude Sonnet
+at medium for dispatch, Git and Pull Request routine; Codex `gpt-6-astra` at medium,
+read-only for reconnaissance and at high, workspace-write for implementation. The
+mechanical reviewer is Codex `gpt-5.6-sol` at high for Codex GPT-6 Astra implementations,
+or Codex `gpt-6-astra` at high for Claude implementations; keep that choice for all rounds.
+Run the reviewer read-only with `codex exec`, an explicit model and effort, a
+change-specific prompt and closed stdin as documented in `CONTRIBUTING.md`.
+
+Mechanical review repeats until nothing substantive remains, challenging every declined
+finding in later rounds. The orchestrator then checks the final diff against the plan
+and invariants, with at most two correction rounds before escalation to the owner.
+Return one structured findings list to the implementer per round; agents do not
+negotiate, and the orchestrator decides. Summarise accepted and declined findings,
+their reasons and fixes, and whether the final round was clean when requesting owner
+review.
+
 Install `.githooks` with `git config core.hooksPath .githooks`. Run the validation gate
 before review. Route out-of-scope findings to separate Issues. Complete external review,
 move the plan to `completed/`, rebuild release, mark Ready, and merge by squash only.
