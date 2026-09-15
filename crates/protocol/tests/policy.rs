@@ -215,8 +215,7 @@ fn push_hook_ignores_inherited_git_environment() {
 }
 
 #[cfg(unix)]
-#[test]
-fn push_hook_enforces_content_and_local_policy() {
+fn hook_fixture() -> PathBuf {
     use std::os::unix::fs::PermissionsExt;
     let root = workspace();
     let nonce = std::time::SystemTime::now()
@@ -235,22 +234,34 @@ fn push_hook_enforces_content_and_local_policy() {
     let cargo = fixture.join("bin/cargo");
     std::fs::write(&cargo, "exit 0\n").unwrap();
     std::fs::set_permissions(&cargo, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let git = |args: &[&str]| {
-        let output = without_git_environment(Command::new("git"))
-            .current_dir(&fixture)
-            .args(args)
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        String::from_utf8(output.stdout).unwrap().trim().to_owned()
-    };
+    let git = |args: &[&str]| fixture_git(&fixture, args);
     git(&["init", "--initial-branch=topic"]);
     git(&["config", "user.name", "Policy Test"]);
     git(&["config", "user.email", &["policy", "invalid"].join("@")]);
+    fixture
+}
+
+#[cfg(unix)]
+fn fixture_git(fixture: &Path, args: &[&str]) -> String {
+    let output = without_git_environment(Command::new("git"))
+        .current_dir(fixture)
+        .args(args)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout).unwrap().trim().to_owned()
+}
+
+#[cfg(unix)]
+#[test]
+fn push_hook_enforces_content_and_local_policy() {
+    use std::os::unix::fs::PermissionsExt;
+    let fixture = hook_fixture();
+    let git = |args: &[&str]| fixture_git(&fixture, args);
     std::fs::write(fixture.join("note.txt"), "Safe content\n").unwrap();
     git(&["add", "note.txt"]);
     git(&["commit", "-m", "Add safe content"]);
@@ -355,8 +366,48 @@ fn invoke_hook(fixture: &Path, base: &str, head: &str, destination: &str) -> std
             "run",
             &format!("--to-stdin={}", updates.display()),
             "pre-push",
+            "--",
+            "origin",
+            "fixture",
         ])
         .env("PATH", &path)
         .output()
         .unwrap()
+}
+
+#[cfg(unix)]
+#[test]
+fn push_hook_checks_new_branches_against_only_the_destination() {
+    let fixture = hook_fixture();
+    let git = |args: &[&str]| fixture_git(&fixture, args);
+    git(&["remote", "add", "origin", "."]);
+    git(&["remote", "add", "secondary", "."]);
+    git(&["commit", "--allow-empty", "-m", "Add safe base"]);
+    let base = git(&["rev-parse", "HEAD"]);
+    std::fs::write(
+        fixture.join("note.txt"),
+        ["", "private", "capture"].join("/"),
+    )
+    .unwrap();
+    git(&["add", "note.txt"]);
+    git(&["commit", "-m", "Add policy fixture"]);
+    let head = git(&["rev-parse", "HEAD"]);
+    git(&["update-ref", "refs/remotes/secondary/topic", &head]);
+    // A similarly prefixed remote must not count as the destination either.
+    git(&["update-ref", "refs/remotes/origin-backup/topic", &head]);
+    for destination_has_refs in [false, true] {
+        if destination_has_refs {
+            git(&["update-ref", "refs/remotes/origin/base", &base]);
+        }
+        let rejected = invoke_hook(&fixture, &"0".repeat(40), &head, "topic");
+        assert!(!rejected.status.success());
+        assert!(String::from_utf8_lossy(&rejected.stderr).contains("absolute filesystem path"));
+    }
+    git(&["update-ref", "refs/remotes/origin/topic", &head]);
+    let accepted = invoke_hook(&fixture, &"0".repeat(40), &head, "topic");
+    assert!(
+        accepted.status.success(),
+        "{}",
+        String::from_utf8_lossy(&accepted.stderr)
+    );
 }

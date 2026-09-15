@@ -189,7 +189,18 @@ fn check_added_text(commit: &str, diff: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn check_updates(input: &str) -> Result<(), String> {
+fn new_branch_history(remote: &str, commit: &str) -> Result<String, String> {
+    let refs = git(&[
+        "for-each-ref",
+        "--format=%(objectname)",
+        &format!("refs/remotes/{remote}/"),
+    ])?;
+    let mut args = vec!["rev-list", commit, "--not"];
+    args.extend(refs.lines());
+    git(&args)
+}
+
+fn check_updates(remote: &str, input: &str) -> Result<(), String> {
     let mut commits = std::collections::BTreeSet::new();
     for line in input.lines() {
         let fields: Vec<_> = line.split_whitespace().collect();
@@ -203,7 +214,7 @@ fn check_updates(input: &str) -> Result<(), String> {
             continue;
         }
         let history = if fields[3].chars().all(|c| c == '0') {
-            git(&["rev-list", fields[1], "--not", "--remotes"])?
+            new_branch_history(remote, fields[1])?
         } else {
             git(&["rev-list", &format!("{}..{}", fields[3], fields[1])])?
         };
@@ -220,7 +231,8 @@ fn main() -> Result<(), String> {
     io::stdin()
         .read_to_string(&mut input)
         .map_err(|e| e.to_string())?;
-    check_updates(&input)
+    let remote = std::env::args().nth(1).ok_or("missing destination remote")?;
+    check_updates(&remote, &input)
 }
 
 #[cfg(test)]
@@ -305,7 +317,7 @@ mod tests {
     #[test]
     fn refuses_main_including_deletion() {
         assert!(
-            check_updates("refs/heads/topic 0000 refs/heads/main 1234")
+            check_updates("origin", "refs/heads/topic 0000 refs/heads/main 1234")
                 .unwrap_err()
                 .contains("Pull Request")
         );

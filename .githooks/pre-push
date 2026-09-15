@@ -41,7 +41,7 @@ cargo test --locked || fail "tests failed; resolve the failures"
 
 mkdir -p target/policy
 rustc --edition=2024 -D warnings scripts/content_policy.rs -o target/policy/content-policy || fail "cannot compile the content policy"
-target/policy/content-policy < "$updates" || fail "outgoing content violates repository policy"
+target/policy/content-policy "$1" < "$updates" || fail "outgoing content violates repository policy"
 
 if test "$policy_configured" = true; then
     "$policy" "$@" < "$updates" || fail "local policy hook failed"
