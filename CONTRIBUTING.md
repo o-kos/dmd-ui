@@ -64,8 +64,16 @@ explains the failure:
 ```sh
 cargo fmt --all -- --check
 cargo clippy --all-targets --locked
+mkdir -p target
+native_lib_dir=$(mktemp -d "$PWD/target/native-clippy.XXXXXX")
+DMD_CORE_LIB_DIR="$native_lib_dir" cargo clippy -p dmd --features native --all-targets --locked
+rmdir "$native_lib_dir"
 cargo test --locked
 ```
+
+The native Clippy step type-checks and lints native code without a core. Its library
+directory is empty: Clippy checks the native feature without building or linking the
+application binary. Both CI tiers run this step, using Bash on all three platforms.
 
 Use `git push --no-verify` only as an explicit escape hatch. State the reason and the
 checks bypassed in the Pull Request. A bypass does not replace validation or review.
