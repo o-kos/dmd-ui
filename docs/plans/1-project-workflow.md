@@ -67,14 +67,14 @@ more expensive than starting with it:
       review procedure and the plan rules.
 - [x] Add `docs/plans/README.md`, `docs/plans/TEMPLATE.md` and `docs/plans/completed/`.
 - [x] Add the Issue and Pull Request templates.
-- [ ] Add `.githooks/pre-push` with the local gate, the `main` refusal, the generic
+- [x] Add `.githooks/pre-push` with the local gate, the `main` refusal, the generic
       content checks and the optional local policy hook.
 - [x] Add the Cargo workspace: `rust-toolchain.toml`, `clippy.toml`, workspace lints and
       `default-members`.
 - [x] Add `crates/dmd-protocol` and `crates/dmd` so the gate has something to check.
 - [x] Add `crates/dmd-native` and `crates/dmd-core-sys` as optional crates, with the C
       ABI header, the linking build script and its diagnostic for missing variables.
-- [ ] Add the CI workflow publishing `ci/quick` on Draft and `ci/full` otherwise, plus
+- [x] Add the CI workflow publishing `ci/quick` on Draft and `ci/full` otherwise, plus
       the dependency-source policy test.
 - [x] Add `CHANGELOG.md`.
 - [ ] Complete validation.
