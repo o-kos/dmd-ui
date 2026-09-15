@@ -108,6 +108,12 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] Normalize bare host candidates before policy comparisons and test uppercase hosts.
 - [x] Run core-independent native diagnostic tests without the native feature in every gate.
 
+## Review round 3
+
+- [x] Compile and test the FFI diagnostic adapter without native linking, verify that
+      borrowed messages survive buffer reuse, and confirm that replacing the copy
+      with an empty string fails the regression tests; preserve default build isolation.
+
 ## Code quality policy
 
 The owner asked for an explicit Rust maintainability policy on top of Clippy's

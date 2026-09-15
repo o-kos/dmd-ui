@@ -16,6 +16,8 @@ pub enum Error {
 }
 
 #[cfg(any(feature = "native", test))]
+mod adapter;
+#[cfg(any(feature = "native", test))]
 mod diagnostic;
 
 #[cfg(feature = "native")]

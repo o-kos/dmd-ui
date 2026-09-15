@@ -13,5 +13,8 @@ native = ["dep:dmd-core-sys", "dmd-core-sys/native"]
 thiserror.workspace = true
 dmd-core-sys = { workspace = true, optional = true }
 
+[dev-dependencies]
+dmd-core-sys.workspace = true
+
 [lints]
 workspace = true
