@@ -19,13 +19,24 @@ dmd-native = { path = "crates/native", default-features = false }
 dmd-core-sys = { path = "crates/core-sys", default-features = false }
 
 [workspace.lints.rust]
+# Deny warnings here so plain cargo clippy is as strict locally as in CI.
 warnings = "deny"
-unsafe_op_in_unsafe_fn = "deny"
+unsafe_op_in_unsafe_fn = "warn"
 
+# Choose lints individually: pedantic, nursery and restriction contain lints that
+# contradict this codebase and each other, and grow silently on a toolchain bump.
+# Never enable those groups wholesale. Thresholds live in clippy.toml.
 [workspace.lints.clippy]
-allow_attributes = "deny"
-allow_attributes_without_reason = "deny"
-too_many_lines = "deny"
-cognitive_complexity = "deny"
-too_many_arguments = "deny"
-undocumented_unsafe_blocks = "deny"
+# Enforce expect (which fails once unneeded) with a reason; owner agreement is a
+# review obligation that no lint checks.
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+too_many_lines = "warn"
+cognitive_complexity = "warn"
+too_many_arguments = "warn"
+undocumented_unsafe_blocks = "warn"
+excessive_nesting = "warn"
+fn_params_excessive_bools = "warn"
+manual_let_else = "warn"
+redundant_else = "warn"
+branches_sharing_code = "warn"

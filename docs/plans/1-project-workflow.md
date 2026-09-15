@@ -110,7 +110,7 @@ defaults before this change lands.
   parameters. Every threshold carries a comment naming what it protects against.
 - Opaque nested `if` chains are a review obligation that no lint enforces.
 
-- [ ] Add the lints, move their levels under `warnings = "deny"`, and document each
+- [x] Add the lints, move their levels under `warnings = "deny"`, and document each
       threshold in `clippy.toml`; refactor any code the new lints flag.
 - [ ] Document the lint policy, the suppression rule and the `if`-chain review
       obligation in `CONTRIBUTING.md` and `AGENTS.md`, and state that CI never restates
