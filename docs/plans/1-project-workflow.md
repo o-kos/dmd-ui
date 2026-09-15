@@ -98,7 +98,7 @@ Keep this plan in place and stop after local commits; do not push.
 - [x] Scope new-branch content checks to the destination remote and test two remotes.
 - [x] Check merge filenames and added text against the first parent with a regression test.
 - [x] Parse URL authorities and SCP-style hosts with bypass and permitted-form tests.
-- [ ] Reject non-Unicode core variables while preserving the missing-directory diagnostic.
+- [x] Reject non-Unicode core variables while preserving the missing-directory diagnostic.
 - [ ] Preserve native diagnostic operation, code and owned message under the ABI rules.
 - [ ] Type-check and lint native code without a core in the hook and both CI jobs.
 - [ ] Complete the full validation gate and leave the plan move pending.

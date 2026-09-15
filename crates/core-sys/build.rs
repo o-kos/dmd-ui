@@ -3,8 +3,6 @@ fn main() {}
 
 #[cfg(feature = "native")]
 fn main() {
-    use std::env;
-
     for name in [
         "DMD_CORE_LIB_DIR",
         "DMD_CORE_LIB_NAME",
@@ -12,15 +10,13 @@ fn main() {
     ] {
         println!("cargo:rerun-if-env-changed={name}");
     }
-    let directory = env::var("DMD_CORE_LIB_DIR")
-        .ok()
-        .filter(|value| !value.trim().is_empty());
+    let directory = variable("DMD_CORE_LIB_DIR").filter(|value| !value.trim().is_empty());
     let Some(directory) = directory else {
         panic!(
             "DMD_CORE_LIB_DIR must be set; DMD_CORE_LIB_NAME defaults to dmd_core; DMD_CORE_EXTRA_LIBS is optional"
         );
     };
-    let name = env::var("DMD_CORE_LIB_NAME").unwrap_or_else(|_| "dmd_core".into());
+    let name = variable("DMD_CORE_LIB_NAME").unwrap_or_else(|| "dmd_core".into());
     assert!(
         !name.trim().is_empty() && !name.contains(['\n', '\r']),
         "DMD_CORE_LIB_NAME must be nonempty and single-line"
@@ -31,7 +27,7 @@ fn main() {
     );
     println!("cargo:rustc-link-search=native={directory}");
     println!("cargo:rustc-link-lib=static={name}");
-    if let Ok(extra) = env::var("DMD_CORE_EXTRA_LIBS") {
+    if let Some(extra) = variable("DMD_CORE_EXTRA_LIBS") {
         assert!(
             !extra.contains(['\n', '\r']),
             "DMD_CORE_EXTRA_LIBS must be single-line"
@@ -43,5 +39,14 @@ fn main() {
         {
             println!("cargo:rustc-link-lib={library}");
         }
+    }
+}
+
+#[cfg(feature = "native")]
+fn variable(name: &str) -> Option<String> {
+    match std::env::var(name) {
+        Ok(value) => Some(value),
+        Err(std::env::VarError::NotPresent) => None,
+        Err(std::env::VarError::NotUnicode(_)) => panic!("{name} must be valid Unicode"),
     }
 }
