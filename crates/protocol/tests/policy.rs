@@ -295,6 +295,42 @@ fn push_hook_enforces_content_and_local_policy() {
     assert!(String::from_utf8_lossy(&failed.stderr).contains("local policy hook failed"));
     std::fs::write(&local, "exit 0\n").unwrap();
     assert!(hook(&base, "topic").status.success());
+    assert_relative_policy_ignores_path_decoy(&fixture, &base);
+}
+
+#[cfg(unix)]
+fn assert_relative_policy_ignores_path_decoy(fixture: &Path, base: &str) {
+    use std::os::unix::fs::PermissionsExt;
+
+    for (relative, marker) in [
+        ("local-policy", "configured"),
+        ("bin/local-policy", "decoy"),
+    ] {
+        let script = fixture.join(relative);
+        std::fs::write(&script, format!("printf '{marker}' > policy-ran\n")).unwrap();
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    for configured in ["local-policy", "./local-policy"] {
+        let config = without_git_environment(Command::new("git"))
+            .current_dir(fixture)
+            .args(["config", "dmd.localPolicy", configured])
+            .output()
+            .unwrap();
+        assert!(
+            config.status.success(),
+            "{}",
+            String::from_utf8_lossy(&config.stderr)
+        );
+        let result = invoke_hook(fixture, base, base, "topic");
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let marker = fixture.join("policy-ran");
+        assert_eq!(std::fs::read_to_string(&marker).unwrap(), "configured");
+        std::fs::remove_file(marker).unwrap();
+    }
 }
 
 #[cfg(unix)]

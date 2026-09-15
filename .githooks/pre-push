@@ -16,6 +16,11 @@ policy_configured=false
 if policy=$(git config --get dmd.localPolicy); then
     policy_configured=true
     echo "pre-push: local policy hook configured"
+    case "$policy" in
+        "") fail "dmd.localPolicy must name an executable file" ;;
+        /*) ;;
+        *) policy="$root/$policy" ;;
+    esac
     test -f "$policy" && test -x "$policy" || fail "dmd.localPolicy must name an executable file"
 else
     status=$?

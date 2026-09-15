@@ -52,8 +52,10 @@ text hygiene check, not a secrets scanner. Avoid binary additions that require t
 review without a separate review of their contents.
 
 The hook reports whether `dmd.localPolicy` is configured. When configured, it must name
-an executable file; empty or invalid values fail the gate. The hook invokes it with
-the same arguments and ref-update input as pre-push, and propagates failure. Keep environment-specific policy outside the tree.
+an executable file; empty or invalid values fail the gate. Relative values are relative
+to the repository top level. The hook resolves the value to an absolute path before
+validating it and executes exactly that path, with the same arguments and ref-update
+input as pre-push, propagating failure. Keep environment-specific policy outside the tree.
 Configure it with `git config dmd.localPolicy <executable>`.
 
 The gate stops at the first failed command and explains the failure:
