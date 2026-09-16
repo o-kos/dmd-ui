@@ -15,7 +15,8 @@ the interface crate builds the `wr` binary, while `dmd` keeps its name.
 - `crates/cli`: command-line surface and backend selection.
 - `crates/native`: safe resource ownership over the C ABI.
 - `crates/core-sys`: C header, matching raw declarations and static linking.
-- `assets/icons/`: colour and monochrome Wireroom icon sources.
+- `assets/icons/`: colour and monochrome Wireroom icon sources, with optical variants
+  for small sizes.
 - `docs/plans`: active plans; `docs/plans/completed`: finished plans.
 - `.github/scripts`: CI decision logic; `scripts`: local policy checks.
 

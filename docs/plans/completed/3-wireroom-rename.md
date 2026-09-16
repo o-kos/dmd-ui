@@ -33,6 +33,12 @@ as a URL on the W3C host.
   strokes on a 100-unit grid. It ships as `assets/icons/wireroom.svg` and a single-colour
   `assets/icons/wireroom-mono.svg` that uses `currentColor`, for monochrome contexts
   such as a system tray.
+- Small sizes get their own optical sources, `assets/icons/wireroom-16.svg` and
+  `assets/icons/wireroom-mono-16.svg`. Round points of the main drawing merge into one
+  blob at 16 pixels, so the small sources place four pixel-aligned squares, each two
+  pixels wide and two pixels from its neighbour at that size, inside a thinner loop.
+  They drop the point outlines that blur at that size and replace the arrowhead chevron
+  with a filled triangle.
 - Icons live under a repository-level `assets/icons/` directory until the interface
   crate exists and takes ownership of them.
 - The host of the SVG namespace joins the content policy's host allowlist. It belongs
@@ -67,14 +73,23 @@ as a URL on the W3C host.
 - [x] State the `wr` and `dmd` binary names in `CONTRIBUTING.md`.
 - [x] Record the completed validation in this plan.
 
+## Review round 2
+
+- [x] Rewrite the earlier test additions so every commit of this change passes the
+      final content policy, not only the commits of the push that introduced them.
+- [x] Add optical small-size icon sources that keep the four points distinct at 16
+      pixels, instead of deferring that acceptance criterion.
+- [x] Record both corrections in this plan.
+
 ## Validation
 
 - [x] Verify each Issue acceptance criterion.
 - [x] Searching tracked content for the old product title finds no match outside
       `docs/plans/completed/`.
-- [x] Both icons render with `rsvg-convert` at 16, 24 and 64 pixels and contain no
-      external references or embedded rasters. They read clearly at 24 and 64 pixels;
-      at 16 pixels the four constellation points merge.
+- [x] All four icon sources render with `rsvg-convert` at 16, 24 and 64 pixels and
+      contain no external references or embedded rasters. The main sources read clearly
+      at 24 and 64 pixels; the small-size sources keep the four points distinct at 16
+      pixels.
 - [x] `cargo fmt --all -- --check`
 - [x] `cargo clippy --all-targets --locked`
       (warnings are denied in `[workspace.lints]`)
@@ -87,6 +102,5 @@ as a URL on the W3C host.
 
 ## Post-completion
 
-- Generate raster sizes and platform icon bundles when the interface crate is created,
-  including a dedicated small-size variant whose constellation points stay distinct at
-  16 pixels.
+- Generate raster sizes and platform icon bundles from these sources when the interface
+  crate is created, taking 16-pixel rasters from the small-size sources.
