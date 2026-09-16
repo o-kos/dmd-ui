@@ -11,6 +11,7 @@ const HOSTS: &[&str] = &[
     "index.crates.io",
     "doc.rust-lang.org",
     "keepachangelog.com",
+    "www.w3.org",
 ];
 // Bare names use common DNS suffixes to distinguish hosts from source expressions.
 // URLs are checked for every scheme and suffix, independently of this heuristic.
@@ -116,28 +117,61 @@ fn token_violation(token: &str) -> Option<&'static str> {
     None
 }
 
+fn strip_markup_closing_tag<'a>(text: &'a str, earlier: &str) -> &'a str {
+    let Some((tag, rest)) = text.split_once('>') else {
+        return text;
+    };
+    let Some(name) = tag.strip_prefix('/') else {
+        return text;
+    };
+    if name.as_bytes().first().is_some_and(u8::is_ascii_alphabetic)
+        && name
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.' | b':'))
+        && earlier.split('<').skip(1).any(|part| {
+            part.strip_prefix(name).is_some_and(|rest| {
+                rest.starts_with(|c: char| c.is_whitespace() || matches!(c, '>' | '/'))
+            })
+        })
+    {
+        return rest;
+    }
+    text
+}
+
 fn violation(text: &str) -> Option<&'static str> {
-    text.split(|c: char| {
-        c.is_whitespace()
-            || matches!(
-                c,
-                '"' | '\''
-                    | '`'
-                    | '<'
-                    | '>'
-                    | '('
-                    | ')'
-                    | '['
-                    | ']'
-                    | '{'
-                    | '}'
-                    | '='
-                    | ';'
-                    | ','
-                    | '|'
-            )
-    })
-    .find_map(token_violation)
+    let mut offset = 0;
+    text.split('<')
+        .enumerate()
+        .flat_map(|(index, part)| {
+            let earlier = &text[..offset];
+            offset += part.len() + 1;
+            let part = if index == 0 {
+                part
+            } else {
+                strip_markup_closing_tag(part, earlier)
+            };
+            part.split(|c: char| {
+                c.is_whitespace()
+                    || matches!(
+                        c,
+                        '"' | '\''
+                            | '`'
+                            | '>'
+                            | '('
+                            | ')'
+                            | '['
+                            | ']'
+                            | '{'
+                            | '}'
+                            | '='
+                            | ';'
+                            | ','
+                            | '|'
+                    )
+            })
+        })
+        .find_map(token_violation)
 }
 
 fn git(args: &[&str]) -> Result<String, String> {
@@ -281,6 +315,95 @@ mod tests {
             "https://github.com/actions/checkout",
         ] {
             assert_eq!(violation(value), None, "rejected {value}");
+        }
+    }
+
+    #[test]
+    fn permits_svg_namespace_but_rejects_unapproved_hosts() {
+        for value in [
+            "http://www.w3.org/2000/svg",
+            r#"xmlns="http://www.w3.org/2000/svg""#,
+        ] {
+            assert_eq!(violation(value), None, "rejected {value}");
+        }
+        let host = ["service", "invalid"].join(".");
+        let url = ["http:", "", &host, "2000/svg"].join("/");
+        for value in [url.clone(), format!(r#"xmlns="{url}""#)] {
+            assert_eq!(violation(&value), Some("unapproved URL host"), "missed {value}");
+        }
+    }
+
+    #[test]
+    fn permits_markup_closing_tags_and_complete_svg() {
+        for value in [
+            "<svg></svg>",
+            "<g></g>",
+            "<A0-_.:z></A0-_.:z>",
+            "<g/></g>",
+            concat!("<g", "\t>", "<", "/", "g>"),
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><g fill="currentColor"></g></svg>"#,
+            include_str!(concat!(".", ".", "/", "assets/icons/wireroom-mono.svg")),
+        ] {
+            assert_eq!(violation(value), None, "rejected {value}");
+        }
+    }
+
+    #[test]
+    fn rejects_closing_tags_without_an_earlier_matching_opening_tag() {
+        for name in ["private", "svg", "g", "A0-_.:z"] {
+            let closing = ["<", "/", name, ">"].concat();
+            for value in [
+                closing.clone(),
+                format!("<unrelated>{closing}"),
+                format!("{closing}<{name}>"),
+                format!("<{name}extra>{closing}"),
+                format!("<{}>{closing}", name.to_uppercase()),
+            ] {
+                assert_eq!(
+                    violation(&value),
+                    Some("absolute filesystem path"),
+                    "missed {value}"
+                );
+            }
+        }
+        let closing = ["<", "/", "private", ">"].concat();
+        assert_eq!(
+            violation(&format!("<g>{closing}")),
+            Some("absolute filesystem path")
+        );
+    }
+
+    #[test]
+    fn rejects_paths_inside_and_outside_angle_brackets() {
+        let path = ["", "private", "capture"].join("/");
+        for value in [path.clone(), format!("<{path}>"), format!("<g></g>{path}")] {
+            assert_eq!(
+                violation(&value),
+                Some("absolute filesystem path"),
+                "missed {value}"
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_slash_tokens_that_are_not_well_formed_closing_tags() {
+        for name in [
+            "svg", "g", "1svg", "_svg", "é", "svg ", "svg attr", "svg/", "svg!",
+        ] {
+            let token = ["", name].join("/");
+            for value in [token.clone(), format!("<{token}")] {
+                assert_eq!(
+                    violation(&value),
+                    Some("absolute filesystem path"),
+                    "missed {value}"
+                );
+            }
+            let value = format!("<{token}>");
+            assert_eq!(
+                violation(&value),
+                Some("absolute filesystem path"),
+                "missed {value}"
+            );
         }
     }
 

@@ -1,4 +1,6 @@
-# Contributing
+# Contributing to Wireroom
+
+Wireroom's interface binary will be `wr`, and `dmd` is its command-line tool.
 
 ## 1. Define the change
 

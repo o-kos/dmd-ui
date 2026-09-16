@@ -1,11 +1,14 @@
-# dmd-ui
+# Wireroom
 
-An application for demodulating recorded signals and inspecting the results.
+Wireroom is an operator's console for demodulating recorded signals: tune to a signal,
+set processing parameters, run, and watch progress as a log and in separate panes for
+decoded text, bits, callsigns and the phase constellation.
 
-The interface is the product. Between it and the demodulation libraries sits `dmd`, a
-command-line tool that gives the interface one uniform way to reach demodulation
-regardless of what is behind it. The interface starts `dmd` for a run and reads its
-events; it never loads a demodulation library itself and never links a signal core.
+Wireroom is the product, and its interface binary will be `wr`. Between Wireroom and
+the demodulation libraries sits `dmd`, a command-line tool that gives Wireroom one
+uniform way to reach demodulation regardless of what is behind it. Wireroom starts
+`dmd` for a run and reads its events; it never loads a demodulation library itself and
+never links a signal core.
 
 `dmd` is also a complete tool in its own right, usable directly from a terminal for
 demodulating, inspecting modules and checking results.
@@ -15,18 +18,19 @@ demodulating, inspecting modules and checking results.
 - **Native** performs real demodulation through a signal core and dynamically loaded
   demodulation libraries. It is enabled by the `native` Cargo feature.
 - **Replay** reproduces prepared recordings of earlier runs. It is always available and
-  needs no native toolchain, so the interface can be developed, tested and demonstrated
+  needs no native toolchain, so Wireroom can be developed, tested and demonstrated
   without the demodulation stack present.
 
 Both paths share one command-line surface, one event protocol and one set of result
-files. The interface cannot tell them apart beyond the data they produce, which is what
+files. Wireroom cannot tell them apart beyond the data they produce, which is what
 makes a recording a usable stand-in for a real run.
 
 ## Status
 
-Early bootstrap. Work starts from `dmd` and the shared protocol types; the interface
-crate follows once its toolkit is chosen. The event protocol and the recording format
-are being specified before implementation. See `docs/plans/` for the active work.
+Early bootstrap. Work starts from `dmd` and the shared protocol types; the Wireroom
+interface crate follows once its toolkit is chosen. The event protocol and the
+recording format are being specified before implementation. See `docs/plans/` for the
+active work.
 
 ## Building
 
